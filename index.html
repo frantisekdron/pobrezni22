@@ -26,8 +26,11 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://unpkg.com" crossorigin />
+  <link rel="dns-prefetch" href="https://a.basemaps.cartocdn.com" />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Outfit:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" /></noscript>
   <link rel="preload" as="image" href="assets/img/interiors/byt14-5.webp" fetchpriority="high" />
 
   <link rel="stylesheet" href="assets/css/styles.css" />
@@ -93,7 +96,7 @@
     <div class="hero__videowrap reveal">
       <figure class="vframe" data-tilt="4">
         <div class="vframe__inner">
-          <video id="heroVideo" autoplay muted loop playsinline data-autoview poster="assets/video/reel-poster.jpg">
+          <video id="heroVideo" autoplay muted loop playsinline data-autoview poster="assets/video/reel-poster.webp">
             <source src="assets/video/reel.mp4" type="video/mp4" />
           </video>
           <button class="vframe__sound" id="heroSound" aria-label="Zapnout zvuk videa">
