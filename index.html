@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pobřežní 22 — Luxusní bydlení v srdci Karlína</title>
+  <meta name="description" content="Pobřežní 22 — historický dům citlivě zrekonstruovaný pro současné bydlení. Čtrnáct jedinečných bytů 2+kk a 3+kk na prestižní adrese v Karlíně. Dokončení 2026." />
+  <meta name="theme-color" content="#f7f2e8" />
+  <link rel="icon" type="image/png" href="assets/img/brand/favicon.webp" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Pobřežní 22 — Luxusní bydlení v srdci Karlína" />
+  <meta property="og:description" content="Historický dům, znovuzrozený pro současné bydlení. 14 jedinečných bytů na prestižní adrese v Karlíně." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="assets/img/exterior/dum-noc.webp" />
+  <meta property="og:locale" content="cs_CZ" />
+
+  <link rel="canonical" href="https://www.pobrezni22.cz/" />
+  <meta name="robots" content="index, follow" />
+  <meta property="og:url" content="https://www.pobrezni22.cz/" />
+  <meta property="og:site_name" content="Pobřežní 22" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Pobřežní 22 — Luxusní bydlení v srdci Karlína" />
+  <meta name="twitter:description" content="Historický dům, znovuzrozený pro současné bydlení. 14 jedinečných bytů na prestižní adrese v Karlíně." />
+  <meta name="twitter:image" content="assets/img/exterior/dum-noc.webp" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Outfit:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="preload" as="image" href="assets/img/interiors/byt14-5.webp" fetchpriority="high" />
+
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+<a href="#flats" class="skip" data-i18n="a11y.skip">Přeskočit na výběr bytů</a>
+<div class="scrollbar" id="scrollbar" aria-hidden="true"></div>
+<div class="curtain" id="curtain" aria-hidden="true">
+  <svg class="curtain__logo" viewBox="0 0 40 52" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 2C9 2 2 11 2 22v28h36V22C38 11 31 2 20 2z"/><path d="M20 2v48M2 22h36" opacity=".5"/></svg>
+</div>
+
+<!-- ============ NAV ============ -->
+<header class="nav" id="nav">
+  <div class="nav__inner">
+    <a href="#hero" class="brand" aria-label="Pobřežní 22">
+      <img class="brand__logo" src="assets/img/brand/logo.webp" alt="Pobřežní 22 — Karlín" />
+    </a>
+
+    <nav class="nav__links" id="navLinks">
+      <a href="#house" data-i18n="nav.about">Dům</a>
+      <a href="#karlin" data-i18n="nav.karlin">Karlín</a>
+      <a href="#interiors" data-i18n="nav.interiors">Interiéry</a>
+      <a href="#standards" data-i18n="nav.standards">Standardy</a>
+      <a href="#flats" data-i18n="nav.flats">Byty</a>
+      <a href="#financing" data-i18n="nav.financing">Financování</a>
+      <a href="#contact" data-i18n="nav.contact">Kontakt</a>
+    </nav>
+
+    <div class="nav__actions">
+      <div class="lang" role="group" aria-label="Jazyk / Language">
+        <button class="lang__btn is-active" data-lang="cs">CZ</button>
+        <span class="lang__sep">/</span>
+        <button class="lang__btn" data-lang="en">EN</button>
+      </div>
+      <a href="#reserve" class="btn btn--gold nav__cta" data-i18n="nav.reserve">Rezervovat prohlídku</a>
+      <button class="nav__burger" id="navBurger" aria-label="Menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="hero">
+  <div class="hero__bgwrap" aria-hidden="true">
+    <div class="hero__bgimg"></div>
+    <div class="hero__bgscrim"></div>
+    <div class="hero__grain"></div>
+  </div>
+
+  <div class="hero__grid">
+    <div class="hero__content">
+      <p class="hero__eyebrow reveal" data-i18n="hero.eyebrow">Rezidence v srdci Karlína</p>
+      <h1 class="hero__title reveal"><span class="hero__title-l1" data-i18n="hero.title">Pobřežní 22</span></h1>
+      <div class="hero__rule reveal"><span></span><b data-i18n="hero.kicker">Historický dům · 14 rezidencí · Dokončení 2026</b></div>
+      <p class="hero__lead reveal" data-i18n="hero.subtitle">Historický dům, znovuzrozený pro současné bydlení — na jedné z nejprestižnějších adres Prahy.</p>
+      <div class="hero__cta reveal">
+        <a href="#flats" class="btn btn--gold btn--mag" data-mag data-i18n="hero.cta1">Vybrat byt</a>
+        <a href="#reserve" class="btn btn--ghost-light btn--mag" data-mag data-i18n="hero.cta2">Rezervovat prohlídku</a>
+      </div>
+    </div>
+
+    <div class="hero__videowrap reveal">
+      <figure class="vframe" data-tilt="4">
+        <div class="vframe__inner">
+          <video id="heroVideo" autoplay muted loop playsinline data-autoview poster="assets/video/reel-poster.jpg">
+            <source src="assets/video/reel.mp4" type="video/mp4" />
+          </video>
+          <button class="vframe__sound" id="heroSound" aria-label="Zapnout zvuk videa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path class="snd-on" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+          </button>
+        </div>
+        <figcaption class="vframe__cap" data-i18n="reel.title">Atmosféra, kterou musíte vidět</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="hero__bar">
+    <div class="wrap">
+      <div class="hero__stats">
+        <div class="stat"><span class="stat__num" id="statAvail" data-count="10">10</span><span class="stat__lbl" data-i18n="hero.stat1">Volných bytů</span></div>
+        <div class="stat"><span class="stat__num">2+kk · 3+kk</span><span class="stat__lbl" data-i18n="hero.stat2">Dispozice</span></div>
+        <div class="stat"><span class="stat__num">5,49 mil.</span><span class="stat__lbl" data-i18n="hero.stat3">Cena od (Kč)</span></div>
+        <div class="stat"><span class="stat__num">09/2026</span><span class="stat__lbl" data-i18n="hero.stat4">Dokončení</span></div>
+      </div>
+      <a href="#intro" class="hero__scrolllink" aria-label="Objevte více"><span data-i18n="hero.scroll">Objevte více</span><i></i></a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INTRO / HODNOTY ============ -->
+<section class="intro section" id="intro">
+  <div class="wrap">
+    <div class="intro__head reveal">
+      <span class="sec-num"><b>01</b> — <span data-i18n="intro.eyebrow">O projektu</span></span>
+      <h2 class="display" data-i18n="intro.lead">Adresa, která má duši</h2>
+      <p class="lead" data-i18n="intro.text">Pobřežní 22 spojuje půvab historického činžovního domu s precizní rekonstrukcí a moderním komfortem. Vzniká tu kolekce čtrnácti bytů — od kompaktních 2+kk po prostorné 3+kk s terasami — v lokalitě, kterou dnes vyhledává celá Praha.</p>
+    </div>
+    <div class="values">
+      <div class="value reveal"><span class="value__rule"></span><h3 data-i18n="intro.v1t">Prestižní adresa</h3><p data-i18n="intro.v1d">Pobřežní ulice v dosahu Vltavy, Florence i centra.</p></div>
+      <div class="value reveal"><span class="value__rule"></span><h3 data-i18n="intro.v2t">Citlivá rekonstrukce</h3><p data-i18n="intro.v2d">Obnovená klasicistní fasáda, repliky původních prvků.</p></div>
+      <div class="value reveal"><span class="value__rule"></span><h3 data-i18n="intro.v3t">14 jedinečných bytů</h3><p data-i18n="intro.v3d">Každý byt s vlastním charakterem, sklepem a soukromím.</p></div>
+      <div class="value reveal"><span class="value__rule"></span><h3 data-i18n="intro.v4t">Dokončení 2026</h3><p data-i18n="intro.v4d">Nastěhujte se do nového domova v září 2026.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ KARLÍN ============ -->
+<section class="karlin section" id="karlin">
+  <div class="wrap">
+    <div class="karlin__head reveal">
+      <p class="eyebrow"><b class="sn">02</b><span data-i18n="karlin.eyebrow">Genius loci</span></p>
+      <h2 class="display" data-i18n="karlin.title">Karlín — nejživější čtvrť Prahy</h2>
+    </div>
+  </div>
+  <figure class="karlin__hero reveal" data-parallax="0.14">
+    <img class="parallax-media" data-parallax-target src="assets/img/location/karlin-1.webp" alt="Letecký pohled na Karlín při západu slunce" loading="lazy" />
+    <figcaption data-i18n="karlin.cap1">Karlín při západu slunce — kostel sv. Cyrila a Metoděje a vrch Vítkov</figcaption>
+  </figure>
+  <div class="wrap karlin__lower">
+    <div class="karlin__txt reveal">
+      <p class="lead" data-i18n="karlin.text">Mezi řekou Vltavou a zeleným vrchem Vítkov leží čtvrť, která se proměnila v synonymum dobrého života. Karlín dnes spojuje industriální minulost, novou architekturu, ateliéry, kavárny a parky — a přitom je pár minut od historického jádra Prahy.</p>
+    </div>
+    <figure class="kfig kfig--b reveal" data-parallax="0.22">
+      <img class="parallax-media" data-parallax-target src="assets/img/location/karlin-2.webp" alt="Pohled na Vltavu, Štvanici a Žižkovskou věž" loading="lazy" />
+      <figcaption data-i18n="karlin.cap2">Pohled k Vltavě, ostrovu Štvanice a Žižkovské věži</figcaption>
+    </figure>
+  </div>
+
+  <div class="wrap">
+    <div class="locmap reveal">
+      <div class="locmap__map" id="locMap" role="img" aria-label="Mapa Karlína s body zájmu"></div>
+      <aside class="locmap__list">
+        <span class="eyebrow"><span data-i18n="karlin.reach">V pěší dostupnosti</span></span>
+        <h3 class="locmap__title" data-i18n="karlin.points">Vše na dosah</h3>
+        <ul class="locmap__items" id="locationPoints"></ul>
+        <p class="locmap__note" data-i18n="karlin.note">Najeďte na body — ukážou se na mapě</p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DŮM ============ -->
+<section class="house section" id="house">
+  <div class="wrap house__intro reveal">
+    <div class="house__intro-l">
+      <span class="sec-num"><b>03</b> — <span data-i18n="house.eyebrow">Dům & rekonstrukce</span></span>
+      <h2 class="display" data-i18n="house.title">Klasická krása, současný komfort</h2>
+    </div>
+    <div class="house__intro-r">
+      <p class="lead" data-i18n="house.text">Činžovní dům s klasicistní fasádou prochází kompletní a citlivou rekonstrukcí. Štuková výzdoba, klenuté vstupy i špaletová okna zůstávají věrné původnímu duchu, zatímco interiéry, rozvody a technologie odpovídají nárokům dnešního bydlení.</p>
+      <ul class="ticks">
+        <li data-i18n="house.tag1">Klasicistní fasáda</li>
+        <li data-i18n="house.tag2">Kompletní rekonstrukce</li>
+        <li data-i18n="house.tag3">Sklep ke každému bytu</li>
+      </ul>
+    </div>
+  </div>
+  <div class="house__stage stage--big stage--twilight reveal">
+    <img class="stage__day" src="assets/img/exterior/twilight-2.webp" alt="Fasáda domu Pobřežní 22 za modré hodiny" loading="lazy" />
+    <img class="stage__night" src="assets/img/exterior/twilight-1.webp" alt="Fasáda domu Pobřežní 22 po setmění" loading="lazy" />
+    <span class="stage__sky" aria-hidden="true"></span>
+    <span class="stage__chip" aria-hidden="true"><i class="stage__den" data-i18n="house.f1">Den</i><i class="stage__noc" data-i18n="house.f2">Noc</i></span>
+    <span class="stage__cap house__cap"><span data-i18n="house.capline">Pobřežní 285/22 — obnovená klasicistní fasáda</span></span>
+  </div>
+</section>
+
+<!-- ============ INTERIÉRY ============ -->
+<section class="interiors section" id="interiors">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow"><b class="sn">04</b><span data-i18n="int.eyebrow">Interiéry</span></p>
+      <h2 class="display" data-i18n="int.title">Světlo, dřevo a klid</h2>
+      <p class="lead lead--center" data-i18n="int.text">Vizualizace bytů ukazují materiálovou poctivost a vzdušnost prostoru — dubové parkety, přirozené světlo a čisté linie.</p>
+    </div>
+    <div class="carousel" id="carousel">
+      <div class="carousel__stage" id="carouselStage"></div>
+      <div class="carousel__ui">
+        <button class="carousel__arrow carousel__prev" id="carPrev" aria-label="Předchozí">‹</button>
+        <div class="carousel__meta">
+          <span class="carousel__count"><b id="carIndex">01</b> / <span id="carTotal">10</span></span>
+          <p class="carousel__cap" id="carCap"></p>
+          <div class="carousel__bar"><span id="carBar"></span></div>
+        </div>
+        <button class="carousel__arrow carousel__next" id="carNext" aria-label="Další">›</button>
+      </div>
+      <div class="carousel__dots" id="carDots"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STANDARDY ============ -->
+<section class="standards section section--dark" id="standards">
+  <div class="dark-bg" aria-hidden="true"><img src="assets/img/exterior/dum-noc.webp" alt="" loading="lazy" /></div>
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow"><b class="sn">05</b><span data-i18n="std.eyebrow">Standardy provedení</span></p>
+      <h2 class="display" data-i18n="std.title">Materiály, na kterých záleží</h2>
+      <p class="lead lead--center" data-i18n="std.text">Výběr povrchů a prvků vychází z architektonického návrhu rekonstrukce. Kvalita v každém detailu.</p>
+    </div>
+    <div class="std-grid" id="standardsGrid"></div>
+  </div>
+</section>
+
+<!-- ============ BYTY ============ -->
+<section class="flats section" id="flats">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow" data-i18n="flats.eyebrow">Výběr bytů</p>
+      <h2 class="display" data-i18n="flats.title">Najděte svůj byt</h2>
+      <p class="lead lead--center" data-i18n="flats.text">Vyberte podle dispozice, patra a dostupnosti. Klikněte na byt pro detail s půdorysem a rezervaci prohlídky.</p>
+    </div>
+
+    <div class="expfilter reveal" id="expFilter">
+      <div class="chips" data-filter="layout">
+        <button class="chip is-active" data-val="all" data-i18n="flats.all">Vše</button>
+        <button class="chip" data-val="2+kk">2+kk</button>
+        <button class="chip" data-val="3+kk">3+kk</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="onlyAvail" /><span class="toggle__track"></span><span data-i18n="flats.avail">Volné</span></label>
+    </div>
+
+    <div class="explorer reveal">
+      <div class="explorer__vitrine">
+        <div class="bld" id="bld">
+          <div class="bld__halo" aria-hidden="true"></div>
+          <div class="bld__blueprint" aria-hidden="true"></div>
+          <div class="bld__stage" id="bldStage">
+            <img class="bld__art" src="assets/img/exterior/dum-vykres.webp" alt="Schematický pohled na fasádu Pobřežní 22" draggable="false" />
+            <div class="bld__spot" id="bldSpot" hidden></div>
+            <div class="bld__floors" id="bldFloors"></div>
+          </div>
+          <div class="bld__plate" aria-hidden="true">
+            <b>Pobřežní 22</b><i data-i18n="exp.plate">Schematický pohled · Karlín</i>
+          </div>
+        </div>
+        <p class="bld__hint"><span class="bld__hint-dot"></span><span data-i18n="exp.hint">Vyberte podlaží přímo na fasádě</span></p>
+      </div>
+
+      <div class="explorer__panel">
+        <div class="floorpills" id="floorPicker"></div>
+        <div class="floorhead">
+          <div>
+            <h3 id="floorTitle" class="floorhead__title"></h3>
+            <span id="floorMeta" class="floorhead__meta"></span>
+          </div>
+          <span class="floorhead__badge" id="floorBadge"></span>
+        </div>
+        <div class="unitlist" id="unitList"></div>
+        <p class="unitlist__empty" id="unitEmpty" hidden data-i18n="exp.empty">Na tomto podlaží nejsou byty odpovídající filtru.</p>
+      </div>
+    </div>
+
+    <!-- KOMERCE -->
+    <div class="commercial reveal" id="commercial">
+      <h3 class="commercial__title" data-i18n="flats.commercial">Komerční prostory</h3>
+      <p class="commercial__text" data-i18n="flats.commercialText">K dispozici jsou také nebytové prostory v 1. PP a 1. NP — ideální pro obchod, kancelář či ateliér.</p>
+      <div class="commercial__list" id="commercialList"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINANCOVÁNÍ ============ -->
+<section class="financing section" id="financing">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow"><b class="sn">07</b><span data-i18n="fin.eyebrow">Financování</span></p>
+      <h2 class="display" data-i18n="fin.title">Cesta k vašemu bytu</h2>
+      <p class="lead lead--center" data-i18n="fin.text">Přehledný splátkový plán a hypoteční servis zdarma. Provedeme vás celým procesem od rezervace po předání.</p>
+    </div>
+    <ol class="steps">
+      <li class="step reveal"><span class="step__num">01</span><h3 data-i18n="fin.s1t">Rezervace</h3><p data-i18n="fin.s1d">72 hodin na rozmyšlenou, poté rezervační poplatek 250 000 Kč.</p></li>
+      <li class="step reveal"><span class="step__num">02</span><h3 data-i18n="fin.s2t">20 % do 10 dnů</h3><p data-i18n="fin.s2d">Úhrada první části kupní ceny po podpisu smlouvy.</p></li>
+      <li class="step reveal"><span class="step__num">03</span><h3 data-i18n="fin.s3t">30 % do 60 dnů</h3><p data-i18n="fin.s3d">Druhá splátka v průběhu výstavby.</p></li>
+      <li class="step reveal"><span class="step__num">04</span><h3 data-i18n="fin.s4t">50 % při předání</h3><p data-i18n="fin.s4d">Doplatek po dokončení — plánováno 09/2026.</p></li>
+    </ol>
+    <div class="partner reveal">
+      <h3 data-i18n="fin.partnerTitle">Hypoteční servis zdarma</h3>
+      <p data-i18n="fin.partnerText">Ve spolupráci s hypotečním specialistou Milošem Soukupem zajistíme zpracování hypotéky i odhad nemovitosti zdarma a vyjednáme nejlepší podmínky napříč bankami.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REZERVACE / FORMULÁŘ ============ -->
+<section class="reserve section" id="reserve">
+  <div class="wrap reserve__grid">
+    <div class="reserve__intro reveal">
+      <p class="eyebrow"><b class="sn">08</b><span data-i18n="form.eyebrow">Rezervace prohlídky</span></p>
+      <h2 class="display" data-i18n="form.title">Přijďte se podívat</h2>
+      <p class="lead" data-i18n="form.text">Nechte nám kontakt a my se vám ozveme s termínem prohlídky. Rádi zodpovíme jakýkoli dotaz.</p>
+      <ul class="reserve__contacts">
+        <li><a id="reserveTel" href="#"></a></li>
+        <li><a id="reserveMail" href="#"></a></li>
+      </ul>
+    </div>
+    <form class="form reveal" id="reserveForm" novalidate>
+      <div class="field">
+        <label for="fName" data-i18n="form.name">Jméno a příjmení</label>
+        <input id="fName" name="name" type="text" required />
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fEmail" data-i18n="form.email">E-mail</label>
+          <input id="fEmail" name="email" type="email" required />
+        </div>
+        <div class="field">
+          <label for="fPhone" data-i18n="form.phone">Telefon</label>
+          <input id="fPhone" name="phone" type="tel" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="fUnit" data-i18n="form.unit">Byt o který mám zájem</label>
+        <select id="fUnit" name="unit"></select>
+      </div>
+      <div class="field">
+        <label for="fMsg" data-i18n="form.message">Zpráva (nepovinné)</label>
+        <textarea id="fMsg" name="message" rows="3"></textarea>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="fGdpr" required />
+        <span data-i18n="form.gdpr">Souhlasím se zpracováním osobních údajů za účelem vyřízení poptávky.</span>
+      </label>
+      <button type="submit" class="btn btn--gold btn--full" id="formSubmit" data-i18n="form.submit">Odeslat poptávku</button>
+      <p class="form__msg" id="formMsg" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+
+<!-- ============ KONTAKT ============ -->
+<section class="contact section" id="contact">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow"><b class="sn">09</b><span data-i18n="contact.eyebrow">Kontakt</span></p>
+      <h2 class="display" data-i18n="contact.title">Promluvme si o vašem novém domově</h2>
+    </div>
+    <div class="contact__grid">
+      <div class="contact__agent reveal" id="contactAgent"></div>
+      <div class="contact__info reveal">
+        <a class="cinfo" id="cPhone" href="#"><span class="cinfo__lbl" data-i18n="contact.callus">Zavolejte nám</span><span class="cinfo__val"></span></a>
+        <a class="cinfo" id="cMail" href="#"><span class="cinfo__lbl" data-i18n="contact.writeus">Napište nám</span><span class="cinfo__val"></span></a>
+        <div class="cinfo"><span class="cinfo__lbl" data-i18n="contact.visit">Adresa projektu</span><span class="cinfo__val" id="cAddr"></span></div>
+      </div>
+      <div class="contact__map reveal">
+        <iframe title="Mapa — Pobřežní 22, Karlín" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+          src="https://www.openstreetmap.org/export/embed.html?bbox=14.4290%2C50.0890%2C14.4490%2C50.0980&amp;layer=mapnik&amp;marker=50.0934%2C14.4382"></iframe>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="wrap footer__grid">
+    <div class="footer__brand">
+      <img class="footer__logo" src="assets/img/brand/logo.webp" alt="Pobřežní 22" />
+      <p data-i18n="footer.tagline">Luxusní bydlení v srdci Karlína</p>
+    </div>
+    <div class="footer__col">
+      <h4 data-i18n="footer.nav">Navigace</h4>
+      <a href="#house" data-i18n="nav.about">Dům</a>
+      <a href="#karlin" data-i18n="nav.karlin">Karlín</a>
+      <a href="#flats" data-i18n="nav.flats">Byty</a>
+      <a href="#financing" data-i18n="nav.financing">Financování</a>
+    </div>
+    <div class="footer__col">
+      <h4 data-i18n="footer.contact">Kontakt</h4>
+      <a id="fTel" href="#"></a>
+      <a id="fMail" href="#"></a>
+      <span id="fAddr"></span>
+      <span id="fCompany"></span>
+    </div>
+  </div>
+  <div class="wrap footer__bottom">
+    <p data-i18n="footer.legal">Informace v této prezentaci mají ilustrativní charakter a nejsou návrhem na uzavření smlouvy. Vizualizace jsou orientační.</p>
+    <p>© <span id="year"></span> <span id="fCompany2"></span>. <span data-i18n="footer.rights">Všechna práva vyhrazena.</span></p>
+  </div>
+  <div class="footer__sign">
+    <span data-i18n="footer.madeby">vyrobeno s láskou</span>
+    <a href="https://frantisekdron.cz" target="_blank" rel="noopener">frantisekdron.cz</a>
+  </div>
+</footer>
+
+<!-- ============ MODAL — DETAIL BYTU ============ -->
+<div class="modal" id="modal" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="modal__overlay" data-close></div>
+  <div class="modal__box">
+    <button class="modal__close" data-close aria-label="Zavřít">&times;</button>
+    <div class="modal__content" id="modalContent"></div>
+  </div>
+</div>
+
+<!-- ============ LIGHTBOX ============ -->
+<div class="lightbox" id="lightbox" aria-hidden="true">
+  <button class="lightbox__close" data-lbclose aria-label="Zavřít">&times;</button>
+  <button class="lightbox__nav lightbox__prev" data-lbprev aria-label="Předchozí">&#8249;</button>
+  <img id="lightboxImg" src="" alt="" />
+  <button class="lightbox__nav lightbox__next" data-lbnext aria-label="Další">&#8250;</button>
+  <p class="lightbox__cap" id="lightboxCap"></p>
+</div>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ApartmentComplex",
+  "name": "Pobřežní 22",
+  "description": "Historický dům citlivě zrekonstruovaný pro současné bydlení. Čtrnáct jedinečných bytů 2+kk a 3+kk na prestižní adrese v Karlíně.",
+  "url": "https://www.pobrezni22.cz/",
+  "numberOfAccommodationUnits": 14,
+  "petsAllowed": true,
+  "image": "https://www.pobrezni22.cz/assets/img/exterior/dum-noc.webp",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Pobřežní 285/22",
+    "addressLocality": "Praha 8 — Karlín",
+    "postalCode": "186 00",
+    "addressCountry": "CZ"
+  },
+  "geo": { "@type": "GeoCoordinates", "latitude": 50.0934, "longitude": 14.4382 },
+  "amenityFeature": [
+    { "@type": "LocationFeatureSpecification", "name": "Klasicistní fasáda" },
+    { "@type": "LocationFeatureSpecification", "name": "Kompletní rekonstrukce" },
+    { "@type": "LocationFeatureSpecification", "name": "Sklep ke každému bytu" }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "RealEstateAgent",
+  "name": "Flatbee Capital s.r.o.",
+  "image": "https://www.pobrezni22.cz/assets/img/brand/logo.webp",
+  "telephone": "+420721461411",
+  "email": "info@flatbee.cz",
+  "address": { "@type": "PostalAddress", "streetAddress": "Pobřežní 285/22", "addressLocality": "Praha 8", "postalCode": "186 00", "addressCountry": "CZ" },
+  "areaServed": "Praha",
+  "url": "https://www.pobrezni22.cz/"
+}
+</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/motion.js"></script>
+</body>
+</html>
