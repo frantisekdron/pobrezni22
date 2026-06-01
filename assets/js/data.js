@@ -119,12 +119,12 @@ const PROJECT_GEO = { lat: 50.09285, lng: 14.44895 };
 
 /* LOKALITA — body zájmu s dostupností pěšky + reálné GPS souřadnice pro mapu */
 const LOCATION_POINTS = [
-  { min: 3,  lat: 50.08960, lng: 14.43840, t: { cs: "Metro Florenc (B, C)", en: "Florenc metro (B, C)" } },
-  { min: 4,  lat: 50.09430, lng: 14.44230, t: { cs: "Náplavka & ostrov Štvanice", en: "Riverside & Štvanice island" } },
-  { min: 5,  lat: 50.09250, lng: 14.45040, t: { cs: "Karlínské náměstí & kostel", en: "Karlín square & church" } },
-  { min: 6,  lat: 50.09120, lng: 14.44760, t: { cs: "Kavárny a restaurace", en: "Cafés & restaurants" } },
-  { min: 10, lat: 50.08930, lng: 14.42870, t: { cs: "OC Palladium & centrum", en: "Palladium & city centre" } },
-  { min: 12, lat: 50.08620, lng: 14.45170, t: { cs: "Park na vrchu Vítkov", en: "Vítkov hill park" } }
+  { min: 3,  lat: 50.08960, lng: 14.43840, img: "assets/img/poi/poi-florenc.webp",   t: { cs: "Metro Florenc (B, C)", en: "Florenc metro (B, C)" } },
+  { min: 4,  lat: 50.09430, lng: 14.44230, img: "assets/img/poi/poi-stvanice.webp",  t: { cs: "Náplavka & ostrov Štvanice", en: "Riverside & Štvanice island" } },
+  { min: 5,  lat: 50.09250, lng: 14.45040, img: "assets/img/poi/poi-kostel.webp",    t: { cs: "Karlínské náměstí & kostel", en: "Karlín square & church" } },
+  { min: 6,  lat: 50.09120, lng: 14.44760, img: "assets/img/poi/poi-kavarny.webp",   t: { cs: "Kavárny a restaurace", en: "Cafés & restaurants" } },
+  { min: 10, lat: 50.08930, lng: 14.42870, img: "assets/img/poi/poi-palladium.webp", t: { cs: "OC Palladium & centrum", en: "Palladium & city centre" } },
+  { min: 12, lat: 50.08620, lng: 14.45170, img: "assets/img/poi/poi-vitkov.webp",    t: { cs: "Park na vrchu Vítkov", en: "Vítkov hill park" } }
 ];
 
 /* JAZYKOVÝ SLOVNÍK */

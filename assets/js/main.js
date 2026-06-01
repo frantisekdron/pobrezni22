@@ -64,6 +64,7 @@
     if (!ul) return;
     ul.innerHTML = LOCATION_POINTS.map(function (p, i) {
       return '<li class="locitem" data-i="' + i + '" tabindex="0">' +
+        (p.img ? '<span class="locitem__thumb"><img src="' + p.img + '" alt="' + p.t[lang] + '" loading="lazy"/></span>' : '') +
         '<span class="locitem__min">' + p.min + '<small>min</small></span>' +
         '<span class="locitem__txt">' + p.t[lang] + '</span>' +
         '<span class="locitem__dot"></span></li>';
@@ -116,7 +117,10 @@
 
     // body zájmu
     locMarkers = LOCATION_POINTS.map(function (p, i) {
-      var icon = L.divIcon({ className: "lmark lmark--poi", html: '<span class="lmark__dot"></span><span class="lmark__tip"><b>' + p.min + ' min</b> ' + p.t[lang] + '</span>', iconSize: [14, 14], iconAnchor: [7, 7] });
+      var tip = '<span class="lmark__tip">' +
+        (p.img ? '<img class="lmark__photo" src="' + p.img + '" alt="' + p.t[lang] + '" loading="lazy"/>' : '') +
+        '<span class="lmark__cap"><b>' + p.min + ' min pěšky</b>' + p.t[lang] + '</span></span>';
+      var icon = L.divIcon({ className: "lmark lmark--poi", html: '<span class="lmark__dot"></span>' + tip, iconSize: [14, 14], iconAnchor: [7, 7] });
       var m = L.marker([p.lat, p.lng], { icon: icon }).addTo(locMap);
       m.on("mouseover", function () { hot(i, true); });
       m.on("mouseout", function () { hot(i, false); });
