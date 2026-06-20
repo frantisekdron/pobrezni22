@@ -30,11 +30,41 @@ stejná pravidla při skreči/odstoupení. To je největší riziko — vždy ov
 
 | Soubor | K čemu |
 |---|---|
-| `arb.py` | jádro: výpočet arbitráže, rozdělení vkladů, sken events JSON |
+| `arb.py` | jádro: výpočet arbitráže (2 i N cest), rozdělení vkladů, sken events JSON |
+| `analyze.py` | **najde VŠECHNY příležitosti**: surebety (jakákoliv marže) + value bety (+EV single, Kelly) |
+| `ingest.py` | **import kurzů ze zkopírovaných stránek** (žádné API) do kotací/DB |
+| `db.py` | vlastní lokální DB kurzů (SQLite) + deník vsazených arbitráží |
 | `normalize.py` | spáruje stejné zápasy/trhy napříč sázkovkami (i „Zverev A." vs „Alexander Zverev") |
-| `scan.py` | kompletní sken: adaptéry → sloučení → arbitráže |
+| `freebet.py` | bezztrátová konverze bonusů/free betů (matched betting) |
+| `scan.py` | kompletní sken přes adaptéry (volitelné live endpointy) |
 | `bookmakers/` | adaptéry Tipsport / Betano / bet365 / Fortuna |
 | `examples/` | vzorové vstupy (`odds_sample.json`, `quotes_sample.json`) |
+
+> **Strategie, rizika a plán na 100 000 Kč: viz `STRATEGY.md`.** Důležité:
+> 20 %+ „jasných" surebetů poctivě skoro neexistuje (bývá to chyba sázkovky,
+> kterou stornují). Stabilní výdělek = objem malých marží (1–3 %) + bonusy;
+> hlavní riziko není matematika, ale **limitace účtů**.
+
+## Hlavní postup (bez API, ze zkopírovaných stránek)
+
+```bash
+python3 scripts/db.py init                       # založ DB
+python3 scripts/ingest.py paste_tipsport.txt --db   # importuj zkopírovanou stránku
+python3 scripts/ingest.py paste_bet365.txt  --db
+python3 scripts/analyze.py --db --min-margin 5 --min-edge 5 -B 100000
+```
+
+Blokový formát pro `ingest.py` (zkopíruj kurzy ze stránky a doplň @ kontext):
+```
+@book tipsport
+@sport tenis
+@event Alexander Zverev | Taylor Fritz
+@market Esa v zápase | 28.5
+Nad | 3.00
+Pod | 1.78
+```
+`analyze.py` pak vybere nejlepší kurz na každý výsledek napříč sázkovkami,
+spočítá surebety i value bety. `--min-margin` / `--min-edge` jsou filtry v %.
 
 ## Postup, který používej
 

@@ -66,11 +66,13 @@ def norm_market(s: str) -> str:
 
 def norm_outcome(s: str) -> str:
     s = strip_accents(s or "").lower().strip()
-    m = {
-        "nad": "Over", "vice": "Over", "over": "Over", "more": "Over",
-        "pod": "Under", "mene": "Under", "under": "Under", "less": "Under",
-        "1": "1", "x": "X", "2": "2",
-    }
+    # over/under pozná i když je v popisku číslo ("nad 28.5", "vice nez 28.5")
+    if re.search(r"\b(nad|vice|over|more)\b", s):
+        return "Over"
+    if re.search(r"\b(pod|mene|under|less)\b", s):
+        return "Under"
+    m = {"1": "1", "x": "X", "2": "2",
+         "remiza": "X", "draw": "X", "home": "1", "away": "2"}
     return m.get(s, s.capitalize())
 
 
