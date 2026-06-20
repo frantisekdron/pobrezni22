@@ -1,0 +1,71 @@
+{
+  "_comment": "Demo dataset pro analyze.py / arb.py scan. Různé marže a typy příležitostí — ukáže řazení, value bety i rizikové štítky. Spusť: python3 scripts/analyze.py examples/seed_events.json -B 100000",
+  "events": [
+    {
+      "sport": "tenis",
+      "event": "Alexander Zverev – Taylor Fritz",
+      "markets": [
+        {
+          "market": "Esa v zápase – hranice 28.5",
+          "quotes": {
+            "Nad 28.5": { "tipsport": 3.00, "betano": 2.85, "fortuna": 2.70 },
+            "Pod 28.5": { "bet365": 1.83, "fortuna": 1.80, "betano": 1.78 }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "fotbal",
+      "event": "Slavia – Sparta",
+      "markets": [
+        {
+          "market": "Výsledek zápasu (1X2)",
+          "quotes": {
+            "1": { "tipsport": 2.50, "fortuna": 2.42 },
+            "X": { "betano": 3.70, "bet365": 3.50 },
+            "2": { "bet365": 3.55, "betano": 3.30 }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "fotbal",
+      "event": "Plzeň – Baník",
+      "markets": [
+        {
+          "market": "Počet gólů – hranice 2.5",
+          "quotes": {
+            "Nad 2.5": { "tipsport": 2.05, "betano": 2.02, "fortuna": 1.98 },
+            "Pod 2.5": { "bet365": 1.92, "fortuna": 1.88, "betano": 1.85 }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "basketbal",
+      "event": "Nymburk – Brno",
+      "markets": [
+        {
+          "market": "Celkem bodů – hranice 158.5",
+          "quotes": {
+            "Nad 158.5": { "tipsport": 1.95, "fortuna": 1.90 },
+            "Pod 158.5": { "betano": 1.95, "bet365": 1.92 }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "tenis",
+      "event": "Sinner – Medvedev (PŘÍKLAD PASTI 20%+)",
+      "markets": [
+        {
+          "market": "Vítěz zápasu — POZOR: kurz 3.40 je pravděpodobně palpable error",
+          "quotes": {
+            "1": { "tipsport": 3.40 },
+            "2": { "bet365": 2.10 }
+          }
+        }
+      ]
+    }
+  ]
+}

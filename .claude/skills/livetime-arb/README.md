@@ -1,45 +1,86 @@
-# livetime-arb — finder arbitrážních (surebet) příležitostí
+# livetime-arb — finder sázkových příležitostí (surebet · value · bonusy)
 
-Claude Code skill, který hledá **„livetime"** arbitráže napříč sázkovkami
-**Tipsport, Betano, bet365, Fortuna**: stejný trh vsazený na opačné strany
-u různých sázkovek tak, aby byl **zisk zaručený** ať padne cokoliv.
+Engine + Claude Code skill, který hledá **„livetime"** příležitosti napříč
+sázkovkami **Tipsport, Betano, bet365, Fortuna**:
 
-Příklad (z reálného snímku): Tipsport **3.00** na „nad 28.5 es" + bet365
-**1.83** na „pod 28.5 es" → **+13.66 % jistý zisk**, vklad 1000 Kč se rozdělí
-**379 / 621 Kč**.
+- **Surebety (arbitráž)** — stejný trh vsazený na všechny výsledky se
+  **zaručeným ziskem** (např. Tipsport 3.00 „nad 28.5 es" + bet365 1.83
+  „pod 28.5" → **+13.66 %**, vklad 1000 Kč rozdělen 380/620 Kč).
+- **Value bety** — +EV jednotlivé sázky (kurz vyšší než férová pravd.).
+- **Konverze bonusů / free betů** — bezztrátová (matched betting).
 
-## Spuštění
+Kurzy se berou **bez API** — importem ze zkopírovaných stránek do vlastní DB.
+
+## Obsah balíčku
+
+| Soubor / složka | Co je uvnitř |
+|---|---|
+| `SKILL.md` | popis skillu pro Claude Code + postupy |
+| **`SPEC_WEBAPP.md`** | **kompletní zadání pro stavbu webového dashboardu (paste-ready)** |
+| `STRATEGY.md` | rizika a plán bankrollu na 100 000 Kč (upřímně) |
+| `ACCOUNT_LONGEVITY.md` | legální plán, jak udržet účty živé (aby tě nelimitovaly) |
+| `scripts/arb.py` | jádro arbitráže (2 i N cest), rozdělení vkladů |
+| `scripts/analyze.py` | najde VŠECHNY příležitosti (surebety + value bety, Kelly) |
+| `scripts/ingest.py` | import kurzů ze zkopírovaných stránek do DB |
+| `scripts/normalize.py` | fuzzy párování zápasů/trhů napříč sázkovkami |
+| `scripts/db.py` | lokální SQLite DB kurzů + deník sázek |
+| `scripts/freebet.py` | kalkulačka bonusů / free betů |
+| `scripts/scan.py` + `bookmakers/` | volitelné adaptéry pro live endpointy |
+| `examples/` | demo data (`seed_events.json`, `quotes_sample.json`, …) |
+| `tests/` | pytest testy jádra (ověřují i referenčních 13,66 %) |
+
+## Rychlý start (čistý Python 3, žádné závislosti)
 
 ```bash
-cd .claude/skills/livetime-arb/scripts
+# 1) Test, že engine počítá správně
+python3 tests/test_engine.py
 
-# 1) Rychlý výpočet z kurzů
-python3 arb.py calc 3.00 1.83 -T 1000 --labels "Nad 28.5" "Pod 28.5" --books tipsport bet365
+# 2) Demo: najdi a seřaď příležitosti v ukázkových datech
+python3 scripts/analyze.py examples/seed_events.json -B 100000 --min-margin 0
 
-# 2) Sken JSON s kurzy z více sázkovek (vybere nejlepší kurz na výsledek)
-python3 arb.py scan ../examples/odds_sample.json -m 1.0
+# 3) Rychlý výpočet z konkrétních kurzů
+python3 scripts/arb.py calc 3.00 1.83 -T 1000 --labels "Nad 28.5" "Pod 28.5" --books tipsport bet365
 
-# 3) Sloučení kotací z různých sázkovek (fuzzy párování jmen) -> sken
-python3 normalize.py ../examples/quotes_sample.json | python3 arb.py scan /dev/stdin -m 1.0
+# 4) Bez API: import ze zkopírované stránky -> DB -> analýza
+python3 scripts/db.py init
+python3 scripts/ingest.py paste.txt --db
+python3 scripts/analyze.py --db --min-margin 5 --min-edge 5 -B 100000
+
+# 5) Bonus / free bet na jisto
+python3 scripts/freebet.py free2 1000 2.00 2.10
 ```
 
-Žádné externí závislosti — čistý Python 3.
+Blokový formát pro `ingest.py` (zkopíruj kurzy ze stránky, doplň `@` kontext):
+```
+@book tipsport
+@sport tenis
+@event Alexander Zverev | Taylor Fritz
+@market Esa v zápase | 28.5
+Nad | 3.00
+Pod | 1.78
+```
 
-## Jak to funguje
+## Jak to funguje (matematika)
 
-Implikovaná pravděpodobnost výsledku = `1 / kurz`. Když součet přes všechny
-výsledky trhu `S = Σ(1/kurz) < 1`, existuje arbitráž s marží `1/S − 1` a
-vklady `T · (1/kurz_i) / S`.
+Implikovaná pravd. výsledku = `1 / kurz`. Když `S = Σ(1/kurz) < 1`, existuje
+arbitráž s marží `1/S − 1` a vklady `T · (1/kurz_i) / S`. Value bet = kurz
+vyšší, než odpovídá férové pravd. spočítané z konsensu sázkovek (po odečtení
+marže); velikost sázky přes zlomkový Kelly.
 
-## Sběr live kurzů
+## Důležité (přečti před sázením)
 
-Sázkovky nemají veřejné API a blokují automatický přístup. Hlavní cesta je
-nechat kurzy nasbírat Clauda (WebFetch) nebo je vložit ručně a spustit výpočet
-(viz `SKILL.md`). Adaptéry v `bookmakers/` jsou volitelná kostra pro případ,
-že máš ověřený live endpoint (nastav přes proměnné `*_LIVE_URL`).
+- **20 %+ „jasných" surebetů poctivě skoro neexistuje** — bývá to chyba
+  sázkovky (palpable error), kterou stornují, nebo rozdílná pravidla trhu.
+  V demu je takový případ schválně označený.
+- **Hlavní riziko není matematika, ale limitace účtů.** Viz `STRATEGY.md` a
+  `ACCOUNT_LONGEVITY.md`.
+- Stabilní výdělek = objem malých marží (1–3 %) + bonusy.
+- Jen licencované sázkovky, vlastní jméno, žádné multiúčty. Sázej zodpovědně
+  (18+). Daně v ČR konzultuj s poradcem.
 
-## Upozornění
+## Stavba webového rozhraní
 
-Ověř, že obě sázky jsou stejný zápas/trh/hranice a mají stejná pravidla při
-skreči. Live kurzy se rychle mění. Nástroj počítá a porovnává — není to
-garance výplaty. Sázej zodpovědně (18+).
+Otevři **`SPEC_WEBAPP.md`** — je to kompletní zadání, které vložíš do Claude
+Code. Postaví z toho dashboard (FastAPI + React/Tailwind) s kartami
+příležitostí, řazením, filtry, rizikovými štítky, deníkem P/L, bankrollem a
+import­ní stránkou. Engine z `scripts/` se znovupoužije, nepřepisuje.
