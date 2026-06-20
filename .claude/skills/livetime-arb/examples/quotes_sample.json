@@ -1,0 +1,9 @@
+{
+  "_comment": "Plochý list kotací z jednotlivých sázkovek. Spáruj a sluč přes: python3 normalize.py quotes_sample.json | python3 arb.py scan /dev/stdin",
+  "quotes": [
+    { "bookmaker": "tipsport", "sport": "tenis", "home": "Alexander Zverev", "away": "Taylor Fritz", "market": "Esa v zápase", "line": 28.5, "outcome": "Nad", "odds": 3.00 },
+    { "bookmaker": "betano",   "sport": "tenis", "home": "Zverev A.",        "away": "Fritz T.",     "market": "Esa",           "line": 28.5, "outcome": "Nad", "odds": 2.85 },
+    { "bookmaker": "bet365",   "sport": "tenis", "home": "A. Zverev",        "away": "T. Fritz",     "market": "Aces",          "line": 28.5, "outcome": "Pod", "odds": 1.83 },
+    { "bookmaker": "fortuna",  "sport": "tenis", "home": "Zverev Alexander", "away": "Fritz Taylor", "market": "Esa v zápase",  "line": 28.5, "outcome": "Pod", "odds": 1.80 }
+  ]
+}

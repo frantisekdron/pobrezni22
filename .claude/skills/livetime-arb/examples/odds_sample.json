@@ -1,0 +1,32 @@
+{
+  "_comment": "Vstup pro `arb.py scan`. Pro každý trh dej ke každému výsledku kurzy z více sázkovek; skript vybere nejvyšší kurz na každý výsledek a spočítá arbitráž.",
+  "events": [
+    {
+      "sport": "tenis",
+      "event": "Alexander Zverev – Taylor Fritz",
+      "markets": [
+        {
+          "market": "Esa v zápase – hranice 28.5",
+          "quotes": {
+            "Nad 28.5": { "tipsport": 3.00, "betano": 2.85, "fortuna": 2.70 },
+            "Pod 28.5": { "bet365": 1.83, "fortuna": 1.80, "betano": 1.78 }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "fotbal",
+      "event": "Slavia – Sparta",
+      "markets": [
+        {
+          "market": "Výsledek zápasu (1X2)",
+          "quotes": {
+            "1": { "tipsport": 2.20, "fortuna": 2.10 },
+            "X": { "betano": 3.60, "bet365": 3.50 },
+            "2": { "bet365": 3.90, "betano": 3.70 }
+          }
+        }
+      ]
+    }
+  ]
+}
