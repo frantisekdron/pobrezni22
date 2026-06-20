@@ -188,9 +188,17 @@ class Handler(BaseHTTPRequestHandler):
         u = urlparse(self.path)
         b = self._body()
 
-        if u.path == "/api/raw":            # userscript posílá syrový API JSON
-            save_raw(b.get("bookmaker", "?"), b.get("url", ""), b.get("json"))
-            return self._send(200, {"ok": True, "count": len(RAW)})
+        if u.path == "/api/raw":            # rozšíření posílá syrový API JSON
+            book = b.get("bookmaker", "?")
+            save_raw(book, b.get("url", ""), b.get("json"))
+            n = 0
+            try:
+                import parse_raw
+                qs = parse_raw.extract(book, b.get("json"))
+                n = db.insert_quotes(qs) if qs else 0
+            except Exception as e:          # parser nesmí shodit příjem
+                print("[parse_raw]", e)
+            return self._send(200, {"ok": True, "count": len(RAW), "parsed": n})
 
         if u.path == "/api/ingest":
             # userscript posílá rovnou pole hotových kotací

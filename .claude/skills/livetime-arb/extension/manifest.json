@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Livetime Arb — sběr kurzů",
+  "version": "0.1",
+  "description": "Sbírá kurzy ze sázkovek (odchyt jejich API) a posílá do lokálního dashboardu na http://localhost:8000.",
+  "host_permissions": [
+    "http://localhost/*",
+    "https://*.tipsport.cz/*",
+    "https://*.ifortuna.cz/*",
+    "https://*.betano.cz/*",
+    "https://*.bet365.com/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["https://*.tipsport.cz/*", "https://*.ifortuna.cz/*", "https://*.betano.cz/*", "https://*.bet365.com/*"],
+      "js": ["inject.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://*.tipsport.cz/*", "https://*.ifortuna.cz/*", "https://*.betano.cz/*", "https://*.bet365.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "world": "ISOLATED"
+    }
+  ]
+}
