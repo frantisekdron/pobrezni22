@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Livetime Arb Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body{background:#0b0f17;color:#e5e9f0;font-family:system-ui,Segoe UI,Roboto,sans-serif}
+  .card{background:#131a26;border:1px solid #1f2a3a}
+  .tab.active{background:#1d4ed8;color:#fff}
+  input,select,textarea{background:#0e141f;border:1px solid #29384d;color:#e5e9f0}
+  th,td{padding:.35rem .55rem}
+  .copybtn:active{transform:scale(.95)}
+</style>
+</head>
+<body class="min-h-screen">
+<div class="max-w-6xl mx-auto p-4">
+  <header class="flex items-center justify-between mb-4 flex-wrap gap-2">
+    <h1 class="text-xl font-bold">🟢 Livetime Arb Dashboard <span class="text-xs font-normal text-slate-500">· běží celé v prohlížeči (bez serveru)</span></h1>
+    <nav class="flex gap-1 text-sm flex-wrap">
+      <button class="tab active px-3 py-1.5 rounded" data-t="dash">Příležitosti</button>
+      <button class="tab px-3 py-1.5 rounded" data-t="import">Import kurzů</button>
+      <button class="tab px-3 py-1.5 rounded" data-t="bets">Deník</button>
+      <button class="tab px-3 py-1.5 rounded" data-t="bank">Bankroll</button>
+      <button class="tab px-3 py-1.5 rounded" data-t="bonus">Bonusy</button>
+    </nav>
+  </header>
+
+  <section id="dash">
+    <div class="card rounded-lg p-3 mb-4 flex flex-wrap gap-3 items-end text-sm">
+      <label>Zdroj dat<br><select id="source" class="rounded px-2 py-1 mt-1">
+        <option value="seed">Demo (25 zápasů)</option>
+        <option value="mine">Moje data (import)</option></select></label>
+      <label>Vklad/surebet<br><input id="total" type="number" value="1000" class="rounded px-2 py-1 w-24 mt-1"></label>
+      <label>Bankroll<br><input id="bankroll" type="number" value="100000" class="rounded px-2 py-1 w-28 mt-1"></label>
+      <label>Min. marže %<br><input id="minmargin" type="number" value="0.5" step="0.5" class="rounded px-2 py-1 w-20 mt-1"></label>
+      <label>Min. EV %<br><input id="minedge" type="number" value="3" step="0.5" class="rounded px-2 py-1 w-20 mt-1"></label>
+      <label>Kelly<br><input id="kelly" type="number" value="0.25" step="0.05" class="rounded px-2 py-1 w-20 mt-1"></label>
+      <button id="findBtn" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded font-semibold">Najít</button>
+      <span id="meta" class="text-slate-400"></span>
+    </div>
+    <h2 class="font-bold mb-2">Surebety <span id="sbcount" class="text-slate-400 text-sm"></span></h2>
+    <div id="surebets" class="grid gap-3 md:grid-cols-2"></div>
+    <h2 class="font-bold mt-6 mb-2">Value bety <span id="vbcount" class="text-slate-400 text-sm"></span></h2>
+    <div id="values" class="grid gap-2"></div>
+  </section>
+
+  <section id="import" class="hidden">
+    <div class="card rounded-lg p-4">
+      <p class="text-sm text-slate-300 mb-2">Zkopíruj kurzy ze stránky sázkovky a vlož v blokovém formátu:</p>
+      <textarea id="paste" rows="12" class="w-full rounded p-2 font-mono text-sm" placeholder="@book tipsport
+@sport tenis
+@event Alexander Zverev | Taylor Fritz
+@market Esa v zápase | 28.5
+Nad | 3.00
+Pod | 1.78
+
+@book bet365
+@event Zverev A. | Fritz T.
+@market Esa v zápase | 28.5
+Nad | 2.70
+Pod | 1.83"></textarea>
+      <div class="flex gap-2 mt-2 flex-wrap">
+        <button id="ingBtn" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded font-semibold">Naparsovat & uložit</button>
+        <button id="clrBtn" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded">Smazat moje data</button>
+        <span id="ingmsg" class="text-sm text-slate-400 self-center"></span>
+      </div>
+      <div id="preview" class="mt-3 text-sm overflow-auto"></div>
+    </div>
+  </section>
+
+  <section id="bets" class="hidden">
+    <div id="betstats" class="card rounded-lg p-3 mb-3 text-sm"></div>
+    <div id="betslist"></div>
+  </section>
+
+  <section id="bank" class="hidden">
+    <div class="card rounded-lg p-3">
+      <div class="flex justify-between mb-2"><h2 class="font-bold">Bankroll & zdraví účtů</h2>
+        <button id="bankSave" class="bg-blue-700 hover:bg-blue-600 px-3 py-1 rounded text-sm">Uložit</button></div>
+      <div id="banktable" class="overflow-auto"></div>
+      <p class="text-xs text-slate-400 mt-2">⚠ Klesající „Max vklad" = blížící se limitace účtu → zařaď mug bety, rotuj kapitál jinam.</p>
+    </div>
+  </section>
+
+  <section id="bonus" class="hidden">
+    <div class="card rounded-lg p-4 max-w-lg">
+      <h2 class="font-bold mb-3">Free bet → jistý zisk (2 sázkovky)</h2>
+      <div class="grid grid-cols-3 gap-2 text-sm">
+        <label>Free bet (Kč)<br><input id="fb_stake" type="number" value="1000" class="rounded px-2 py-1 w-full mt-1"></label>
+        <label>Kurz na A<br><input id="fb_a" type="number" value="2.00" step="0.01" class="rounded px-2 py-1 w-full mt-1"></label>
+        <label>Opačný na B<br><input id="fb_b" type="number" value="2.10" step="0.01" class="rounded px-2 py-1 w-full mt-1"></label>
+      </div>
+      <button id="fbBtn" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded font-semibold mt-3">Spočítat</button>
+      <div id="fbres" class="mt-3 text-sm"></div>
+    </div>
+  </section>
+
+  <footer class="text-xs text-slate-500 mt-8 border-t border-slate-800 pt-3">
+    ⚠ 20 %+ „jasných" surebetů reálně skoro neexistuje (chyba sázkovky → storno).
+    Hlavní riziko = limitace účtů. Jen licencované sázkovky, vlastní jméno, 18+.
+    Daně v ČR konzultuj s poradcem. Tohle není garance výplaty.
+  </footer>
+</div>
+
+<script>
+const SEED = {"_comment": "Vygenerováno generate_seed.py (seed=42). ZÁMĚRNĚ bohatý demo set pro testování řazení/filtrů UI — v realitě je surebetů řádově míň. Mix surebetů, value betů a pasti.", "events": [{"sport": "basketbal", "event": "Nymburk – Brno", "markets": [{"market": "Celkem bodů – hranice 210.5", "quotes": {"Nad 210.5": {"tipsport": 1.81, "fortuna": 1.6, "betano": 1.59}, "Pod 210.5": {"tipsport": 2.32, "fortuna": 2.31, "betano": 2.33}}}]}, {"sport": "hokej", "event": "Sparta – Třinec", "markets": [{"market": "Počet gólů – hranice 3.5", "quotes": {"Nad 3.5": {"betano": 2.3, "fortuna": 2.04}, "Pod 3.5": {"betano": 1.75, "fortuna": 1.75}}}]}, {"sport": "basketbal", "event": "Nymburk – Brno", "markets": [{"market": "Vítěz zápasu", "quotes": {"1": {"tipsport": 2.35, "bet365": 2.7, "fortuna": 2.39, "betano": 2.37}, "2": {"tipsport": 1.56, "bet365": 1.57, "fortuna": 1.57, "betano": 1.55}}}]}, {"sport": "fotbal", "event": "Inter – Milán", "markets": [{"market": "Počet gólů – hranice 3.5", "quotes": {"Nad 3.5": {"bet365": 4.43, "tipsport": 4.41, "betano": 4.36, "fortuna": 4.36}, "Pod 3.5": {"bet365": 1.2, "tipsport": 1.2, "betano": 1.2, "fortuna": 1.19}}}]}, {"sport": "hokej", "event": "Pardubice – Vítkovice", "markets": [{"market": "Výsledek zápasu (1X2)", "quotes": {"1": {"tipsport": 1.8, "fortuna": 1.8}, "X": {"tipsport": 5.74, "fortuna": 5.69}, "2": {"tipsport": 3.0, "fortuna": 3.04}}}]}, {"sport": "basketbal", "event": "Real – Barcelona", "markets": [{"market": "Celkem bodů – hranice 158.5", "quotes": {"Nad 158.5": {"bet365": 1.73, "tipsport": 1.73, "betano": 2.18}, "Pod 158.5": {"bet365": 2.04, "tipsport": 2.05, "betano": 2.03}}}]}, {"sport": "fotbal", "event": "Real Madrid – Barcelona", "markets": [{"market": "Výsledek zápasu (1X2)", "quotes": {"1": {"tipsport": 5.08, "bet365": 5.19, "betano": 5.97, "fortuna": 5.18}, "X": {"tipsport": 2.03, "bet365": 2.03, "betano": 2.05, "fortuna": 2.02}, "2": {"tipsport": 2.64, "bet365": 2.64, "betano": 2.65, "fortuna": 2.62}}}]}, {"sport": "tenis", "event": "Sinner – Medvedev", "markets": [{"market": "Počet gemů – hranice 22.5", "quotes": {"Nad 22.5": {"fortuna": 1.26, "tipsport": 1.27, "bet365": 1.26, "betano": 1.44}, "Pod 22.5": {"fortuna": 3.61, "tipsport": 3.62, "bet365": 3.63, "betano": 3.65}}}]}, {"sport": "tenis", "event": "Swiatek – Sabalenková", "markets": [{"market": "Vítěz zápasu", "quotes": {"1": {"betano": 5.05, "tipsport": 4.47}, "2": {"betano": 1.19, "tipsport": 1.18}}}]}, {"sport": "hokej", "event": "Sparta – Třinec", "markets": [{"market": "Výsledek zápasu (1X2)", "quotes": {"1": {"fortuna": 2.81, "betano": 2.8}, "X": {"fortuna": 2.43, "betano": 2.43}, "2": {"fortuna": 3.33, "betano": 3.35}}}]}, {"sport": "fotbal", "event": "Slavia – Sparta", "markets": [{"market": "Počet gólů – hranice 3.5", "quotes": {"Nad 3.5": {"betano": 1.26, "bet365": 1.44}, "Pod 3.5": {"betano": 3.68, "bet365": 3.72}}}]}, {"sport": "fotbal", "event": "Liverpool – Everton", "markets": [{"market": "Výsledek zápasu (1X2)", "quotes": {"1": {"betano": 8.22, "tipsport": 8.23}, "X": {"betano": 2.0, "tipsport": 2.0}, "2": {"betano": 2.26, "tipsport": 2.25}}}]}, {"sport": "hokej", "event": "Pardubice – Vítkovice", "markets": [{"market": "Počet gólů – hranice 3.5", "quotes": {"Nad 3.5": {"fortuna": 2.61, "tipsport": 2.6, "bet365": 3.05, "betano": 2.6}, "Pod 3.5": {"fortuna": 1.45, "tipsport": 1.47, "bet365": 1.46, "betano": 1.47}}}]}, {"sport": "tenis", "event": "Alexander Zverev – Taylor Fritz", "markets": [{"market": "Počet gemů – hranice 22.5", "quotes": {"Nad 22.5": {"betano": 1.38, "fortuna": 1.22}, "Pod 22.5": {"betano": 4.19, "fortuna": 4.14}}}]}, {"sport": "fotbal", "event": "PSG – Marseille", "markets": [{"market": "Počet gólů – hranice 3.5", "quotes": {"Nad 3.5": {"bet365": 2.91, "betano": 2.95}, "Pod 3.5": {"bet365": 1.38, "betano": 1.39}}}]}, {"sport": "fotbal", "event": "Plzeň – Baník", "markets": [{"market": "Výsledek zápasu (1X2)", "quotes": {"1": {"tipsport": 2.28, "fortuna": 2.62, "betano": 2.3}, "X": {"tipsport": 2.4, "fortuna": 2.42, "betano": 2.4}, "2": {"tipsport": 4.67, "fortuna": 4.76, "betano": 4.71}}}]}, {"sport": "fotbal", "event": "Bayern – Dortmund", "markets": [{"market": "Počet gólů – hranice 2.5", "quotes": {"Nad 2.5": {"bet365": 2.04, "betano": 1.77}, "Pod 2.5": {"bet365": 2.03, "betano": 2.03}}}]}, {"sport": "hokej", "event": "Boston – Toronto", "markets": [{"market": "Počet gólů – hranice 2.5", "quotes": {"Nad 2.5": {"betano": 4.05, "bet365": 4.01, "tipsport": 4.0, "fortuna": 4.02}, "Pod 2.5": {"betano": 1.24, "bet365": 1.23, "tipsport": 1.23, "fortuna": 1.24}}}]}, {"sport": "tenis", "event": "Alexander Zverev – Taylor Fritz", "markets": [{"market": "Esa v zápase – hranice 28.5", "quotes": {"Nad 28.5": {"betano": 1.72, "tipsport": 1.98}, "Pod 28.5": {"betano": 2.1, "tipsport": 2.08}}}]}, {"sport": "tenis", "event": "Alcaraz – Djokovič", "markets": [{"market": "Vítěz zápasu", "quotes": {"1": {"fortuna": 1.25, "tipsport": 1.28}, "2": {"fortuna": 3.65, "tipsport": 3.69}}}]}, {"sport": "tenis", "event": "Sinner – Medvedev", "markets": [{"market": "Vítěz zápasu", "quotes": {"1": {"tipsport": 1.61, "betano": 1.6, "bet365": 2.02}, "2": {"tipsport": 2.25, "betano": 2.23, "bet365": 2.28}}}]}, {"sport": "basketbal", "event": "Real – Barcelona", "markets": [{"market": "Vítěz zápasu — POZOR: extrémní kurz = pravděpodobně chyba", "quotes": {"1": {"tipsport": 2.56, "betano": 2.59, "fortuna": 3.84}, "2": {"tipsport": 1.49, "betano": 1.49, "fortuna": 1.49}}}]}, {"sport": "tenis", "event": "Alcaraz – Djokovič", "markets": [{"market": "Esa v zápase – hranice 22.5", "quotes": {"Nad 22.5": {"bet365": 1.86, "fortuna": 2.15, "tipsport": 1.85, "betano": 1.86}, "Pod 22.5": {"bet365": 1.89, "fortuna": 1.91, "tipsport": 1.89, "betano": 1.91}}}]}, {"sport": "tenis", "event": "Swiatek – Sabalenková", "markets": [{"market": "Počet gemů – hranice 22.5", "quotes": {"Nad 22.5": {"bet365": 2.51, "tipsport": 2.89, "betano": 2.48}, "Pod 22.5": {"bet365": 1.51, "tipsport": 1.5, "betano": 1.51}}}]}, {"sport": "tenis", "event": "Swiatek – Sabalenková", "markets": [{"market": "Esa v zápase – hranice 22.5", "quotes": {"Nad 22.5": {"bet365": 1.8, "tipsport": 1.81, "fortuna": 1.82, "betano": 1.83}, "Pod 22.5": {"bet365": 1.92, "tipsport": 1.94, "fortuna": 1.95, "betano": 1.93}}}]}]};
+const $ = s => document.querySelector(s);
+const fmt = n => Math.round(n||0).toLocaleString('cs-CZ');
+const LS = { get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},
+            set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)) };
+
+/* ───── ENGINE (port z Pythonu) ───── */
+function computeArb(legs,total,roundTo){
+  const probs=legs.map(l=>1/l.odds), S=probs.reduce((a,b)=>a+b,0);
+  legs.forEach((l,i)=>l.stake=total*probs[i]/S);
+  if(roundTo) legs.forEach(l=>l.stake=Math.round(l.stake/roundTo)*roundTo);
+  const payout=Math.min(...legs.map(l=>l.stake*l.odds));
+  const real=legs.reduce((a,l)=>a+l.stake,0);
+  return {S,margin:1/S-1,payout,profit:payout-real};
+}
+function bestLegs(quotes){
+  const legs=[];
+  for(const oc in quotes){
+    const e=Object.entries(quotes[oc]); if(!e.length)continue;
+    let [book,odds]=e[0]; for(const[b,o]of e) if(o>odds){book=b;odds=o;}
+    legs.push({outcome:oc,bookmaker:book,odds});
+  } return legs;
+}
+function riskTier(m){const p=m*100;
+  if(p>8)return{level:'high',label:'🔴 vysoké',why:'Marže >8 % bývá chyba sázkovky (palpable error) nebo rozdílná pravidla trhu — sázku můžou stornovat.'};
+  if(p>=3)return{level:'mid',label:'🟠 střední',why:'Live kurzy se rychle hýbou; ověř, že obě nohy stihneš.'};
+  return{level:'low',label:'🟢 nízké',why:'Realistická arbitráž z rozdílu kurzů na likvidním trhu.'};}
+function findArb(sport,event,market,quotes,total,minMargin,roundTo){
+  const legs=bestLegs(quotes); if(legs.length<2)return null;
+  const r=computeArb(legs,total,roundTo); if(r.margin<minMargin)return null;
+  return{sport,event,market,legs,sum_prob:r.S,margin:r.margin,total_stake:total,payout:r.payout,profit:r.profit,risk:riskTier(r.margin)};
+}
+function fairProbs(quotes){const raw={};
+  for(const oc in quotes){const ips=Object.values(quotes[oc]).filter(o=>o>1).map(o=>1/o);
+    if(ips.length)raw[oc]=ips.reduce((a,b)=>a+b,0)/ips.length;}
+  const S=Object.values(raw).reduce((a,b)=>a+b,0),fp={};
+  for(const oc in raw)fp[oc]=raw[oc]/S; return fp;}
+function kelly(odds,p){const b=odds-1; return b<=0?0:Math.max(0,(b*p-(1-p))/b);}
+function findValueBets(quotes,minEdge,bankroll,kf){
+  const fp=fairProbs(quotes),out=[]; if(Object.keys(fp).length<2)return out;
+  for(const oc in quotes){const p=fp[oc]; if(!p)continue;
+    for(const[book,odds]of Object.entries(quotes[oc])){const edge=odds*p-1;
+      if(edge>=minEdge)out.push({outcome:oc,bookmaker:book,odds,fair_prob:p,edge,stake:Math.round(bankroll*kelly(odds,p)*kf)});}}
+  out.sort((a,b)=>b.edge-a.edge); return out;}
+
+/* ───── INGEST + NORMALIZE (port z Pythonu) ───── */
+const stripAcc=s=>(s||'').normalize('NFKD').replace(/[̀-ͯ]/g,'');
+function nameTokens(s){s=stripAcc(s).toLowerCase().replace(/[^a-z0-9 ]/g,' ');
+  return new Set(s.split(/\s+/).filter(t=>t.length>=3));}
+function namesMatch(a,b){const ta=nameTokens(a),tb=nameTokens(b);
+  if(!ta.size||!tb.size)return false; for(const t of ta)if(tb.has(t))return true; return false;}
+function normOutcome(s){s=stripAcc(s).toLowerCase().trim();
+  if(/\b(nad|vice|over|more)\b/.test(s))return'Over';
+  if(/\b(pod|mene|under|less)\b/.test(s))return'Under';
+  return({'1':'1','x':'X','2':'2','remiza':'X','draw':'X'})[s]||(s.charAt(0).toUpperCase()+s.slice(1));}
+function normMarket(s){s=stripAcc(s).toLowerCase().trim().replace(/\s+/g,' ');
+  return({'esa':'aces','esa v zapase':'aces','aces':'aces','vysledek zapasu':'1x2','1x2':'1x2','pocet gemu':'games','celkem dvojchyb':'df','dvojchyby':'df'})[s]||s;}
+function marketKey(m,line){const b=normMarket(m); return(line==null||line==='')?b:b+'@'+line;}
+const toF=s=>parseFloat(String(s).replace(',','.'));
+function parseBlock(text){
+  const ctx={book:null,sport:null,home:null,away:null,market:null,line:null},q=[];
+  for(let raw of text.split('\n')){const line=raw.trim();
+    if(!line||line.startsWith('#'))continue;
+    if(line.startsWith('@')){const sp=line.slice(1).indexOf(' ');
+      const key=(sp<0?line.slice(1):line.slice(1,sp+1)).toLowerCase().trim();
+      const val=(sp<0?'':line.slice(sp+2)).trim();
+      if(key==='book')ctx.book=val; else if(key==='sport')ctx.sport=val;
+      else if(key==='event'){let parts=val.includes('|')?val.split('|'):val.split(/\s+(?:vs?\.?|–|—|-)\s+/);
+        parts=parts.map(p=>p.trim()).filter(Boolean); if(parts.length>=2){ctx.home=parts[0];ctx.away=parts[1];}}
+      else if(key==='market'){const p=val.split('|'); ctx.market=p[0].trim();
+        ctx.line=(p[1]&&p[1].trim())?toF(p[1]):null;}
+      continue;}
+    let label,odds;
+    if(line.includes('|')){const i=line.lastIndexOf('|'); label=line.slice(0,i).trim(); odds=toF(line.slice(i+1));}
+    else{const m=line.match(/(\d{1,3}(?:[.,]\d{1,3})?)\s*$/); if(!m)continue; odds=toF(m[1]); label=line.slice(0,m.index).trim();}
+    if(!(odds>1))continue;
+    let lineVal=ctx.line; const lm=label.match(/(\d+(?:[.,]\d+)?)/);
+    if(lineVal==null&&lm&&/(nad|pod|over|under|vice|mene)/i.test(label))lineVal=toF(lm[1]);
+    q.push({bookmaker:ctx.book||'?',sport:ctx.sport||'?',home:ctx.home||'?',away:ctx.away||'?',
+      market:ctx.market||'?',line:lineVal,outcome:label||'?',odds});}
+  return q;
+}
+function mergeQuotes(quotes){
+  const clusters=[];
+  for(const q of quotes){
+    let mk=marketKey(q.market,q.line), oc=normOutcome(q.outcome);
+    if(q.line!=null&&(oc==='Over'||oc==='Under'))oc=oc+' '+q.line;
+    let cl=clusters.find(c=>stripAcc((c.sport||'').toLowerCase())===stripAcc((q.sport||'').toLowerCase())&&
+      ((namesMatch(q.home,c.home)&&namesMatch(q.away,c.away))||(namesMatch(q.home,c.away)&&namesMatch(q.away,c.home))));
+    if(!cl){cl={sport:q.sport,home:q.home,away:q.away,markets:{},names:{}}; clusters.push(cl);}
+    if((q.home||'').length>(cl.home||'').length)cl.home=q.home;
+    if((q.away||'').length>(cl.away||'').length)cl.away=q.away;
+    cl.names[mk]=q.market;
+    cl.markets[mk]=cl.markets[mk]||{};
+    cl.markets[mk][oc]=cl.markets[mk][oc]||{};
+    const prev=cl.markets[mk][oc];
+    if(!(q.bookmaker in prev)||q.odds>prev[q.bookmaker])prev[q.bookmaker]=q.odds;
+  }
+  const events=[];
+  for(const c of clusters){const ev={sport:c.sport,event:c.home+' – '+c.away,markets:[]};
+    for(const mk in c.markets){if(Object.keys(c.markets[mk]).length<2)continue;
+      ev.markets.push({market:c.names[mk]||mk,quotes:c.markets[mk]});}
+    if(ev.markets.length)events.push(ev);}
+  return {events};
+}
+
+/* ───── UI ───── */
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  ['dash','import','bets','bank','bonus'].forEach(id=>$('#'+id).classList.add('hidden'));
+  $('#'+b.dataset.t).classList.remove('hidden');
+  if(b.dataset.t==='bets')renderBets();
+  if(b.dataset.t==='bank')renderBank();
+});
+
+function currentEvents(){
+  return $('#source').value==='mine' ? (LS.get('myevents',{events:[]})) : SEED;
+}
+function loadOpps(){
+  const events=currentEvents();
+  const total=+$('#total').value,bankroll=+$('#bankroll').value,kf=+$('#kelly').value;
+  const minM=+$('#minmargin').value/100,minE=+$('#minedge').value/100;
+  let surebets=[],values=[];
+  for(const ev of events.events||[])for(const m of ev.markets||[]){
+    const a=findArb(ev.sport,ev.event,m.market,m.quotes,total,minM,10); if(a)surebets.push(a);
+    for(const v of findValueBets(m.quotes,minE,bankroll,kf)){v.market=m.market;v.event=ev.event;v.sport=ev.sport;values.push(v);}
+  }
+  surebets.sort((a,b)=>b.margin-a.margin); values.sort((a,b)=>b.edge-a.edge);
+  $('#meta').textContent='(zdroj: '+((events.events||[]).length)+' zápasů)';
+  $('#sbcount').textContent=surebets.length; $('#vbcount').textContent=values.length;
+  $('#surebets').innerHTML=surebets.map(sbCard).join('')||'<p class="text-slate-500 text-sm">Žádný surebet nad zadanou marží.</p>';
+  $('#values').innerHTML=values.map(vbRow).join('')||'<p class="text-slate-500 text-sm">Žádný value bet nad zadaným EV.</p>';
+  window._sb=surebets;
+}
+function sbCard(a,idx){
+  const rows=a.legs.map(l=>`<tr><td>${l.outcome}</td><td class="text-blue-300">${l.bookmaker}</td>
+    <td class="text-right">${l.odds.toFixed(2)}</td><td class="text-right font-semibold">${fmt(l.stake)} Kč</td>
+    <td><button class="copybtn text-xs bg-slate-700 px-2 rounded" onclick="navigator.clipboard&&navigator.clipboard.writeText('${fmt(l.stake)}')">⧉</button></td></tr>`).join('');
+  const ring={high:'border-red-500',mid:'border-amber-500',low:'border-emerald-500'}[a.risk.level];
+  return `<div class="card rounded-lg p-3 border-l-4 ${ring}">
+    <div class="flex justify-between items-start">
+      <div><span class="text-2xl font-bold text-emerald-400">+${(a.margin*100).toFixed(2)}%</span>
+        <span class="ml-2 text-xs bg-slate-800 px-2 py-0.5 rounded">${a.sport}</span></div>
+      <span title="${a.risk.why}" class="text-xs cursor-help">${a.risk.label}</span></div>
+    <div class="font-semibold mt-1">${a.event}</div>
+    <div class="text-xs text-slate-400 mb-2">${a.market}</div>
+    <table class="w-full text-sm"><thead class="text-slate-400 text-xs"><tr>
+      <th class="text-left">Výsledek</th><th class="text-left">Sázkovka</th>
+      <th class="text-right">Kurz</th><th class="text-right">Vklad</th><th></th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    <div class="text-sm mt-2">Výplata ~${fmt(a.payout)} Kč → <b class="text-emerald-400">zisk +${fmt(a.profit)} Kč</b>
+      <span class="text-slate-500">(Σ ${(a.sum_prob*100).toFixed(1)}%)</span></div>
+    <button onclick="betIt(${idx})" class="mt-2 bg-emerald-700 hover:bg-emerald-600 px-3 py-1 rounded text-sm">Vsadit (do deníku)</button>
+  </div>`;
+}
+function vbRow(v){return `<div class="card rounded p-2 flex justify-between items-center text-sm border-l-4 border-blue-500">
+  <div><b class="text-blue-300">+${(v.edge*100).toFixed(1)}% EV</b> · ${v.event}
+    <span class="text-slate-400">· ${v.market}</span><br>
+    <span>${v.outcome} @ ${v.bookmaker} <b>${v.odds.toFixed(2)}</b>
+    <span class="text-slate-500">(fér ${(v.fair_prob*100).toFixed(0)}%)</span></span></div>
+  <div class="text-right">vklad<br><b>${fmt(v.stake)} Kč</b></div></div>`;}
+window.betIt=i=>{const a=window._sb[i]; const bets=LS.get('bets',[]);
+  bets.unshift({id:Date.now(),event:a.event,market:a.market,total:a.total_stake,profit:a.profit,margin:a.margin,status:'open'});
+  LS.set('bets',bets); alert('Uloženo do deníku jako otevřená sázka.');};
+
+$('#ingBtn').onclick=()=>{
+  const q=parseBlock($('#paste').value);
+  const prev=LS.get('myquotes',[]).concat(q); LS.set('myquotes',prev);
+  LS.set('myevents',mergeQuotes(prev));
+  $('#ingmsg').textContent='Naparsováno '+q.length+' kotací (celkem uloženo '+prev.length+').';
+  $('#preview').innerHTML=q.length?'<table class="w-full text-xs"><thead class="text-slate-400"><tr><th class="text-left">Sázkovka</th><th class="text-left">Zápas</th><th class="text-left">Trh</th><th class="text-left">Výsledek</th><th class="text-right">Kurz</th></tr></thead><tbody>'+q.map(x=>`<tr><td>${x.bookmaker}</td><td>${x.home} – ${x.away}</td><td>${x.market}${x.line?' '+x.line:''}</td><td>${x.outcome}</td><td class="text-right">${x.odds}</td></tr>`).join('')+'</tbody></table>':'';
+  $('#source').value='mine';
+};
+$('#clrBtn').onclick=()=>{localStorage.removeItem('myquotes');localStorage.removeItem('myevents');
+  $('#ingmsg').textContent='Moje data smazána.';$('#preview').innerHTML='';};
+
+function renderBets(){const bets=LS.get('bets',[]);
+  const val={won:b=>b.profit,lost:b=>-(b.total),settled:b=>b.profit,void:()=>0,open:()=>0};
+  const pnl=bets.reduce((a,b)=>a+(val[b.status]?val[b.status](b):0),0);
+  $('#betstats').innerHTML=`Sázek: <b>${bets.length}</b> · Realizovaný P/L: <b class="${pnl>=0?'text-emerald-400':'text-red-400'}">${fmt(pnl)} Kč</b>`;
+  $('#betslist').innerHTML=bets.length?'<table class="w-full text-sm card rounded"><thead class="text-slate-400 text-xs"><tr><th class="text-left">Zápas</th><th class="text-left">Trh</th><th class="text-right">Vklad</th><th class="text-right">Oček. zisk</th><th>Stav</th></tr></thead><tbody>'+
+    bets.map(b=>`<tr class="border-t border-slate-800"><td>${b.event||''}</td><td class="text-slate-400">${b.market||''}</td><td class="text-right">${fmt(b.total)}</td><td class="text-right text-emerald-400">+${fmt(b.profit)}</td>
+    <td><select onchange="setStatus(${b.id},this.value)" class="rounded text-xs px-1 py-0.5">${['open','won','lost','void','settled'].map(s=>`<option ${s===b.status?'selected':''}>${s}</option>`).join('')}</select></td></tr>`).join('')+'</tbody></table>'
+    :'<p class="text-slate-500 text-sm">Zatím žádné sázky. Vsaď z karty na záložce Příležitosti.</p>';}
+window.setStatus=(id,st)=>{const bets=LS.get('bets',[]);const b=bets.find(x=>x.id===id);if(b)b.status=st;LS.set('bets',bets);renderBets();};
+
+const DEFBOOKS=['tipsport','betano','fortuna','bet365'];
+function renderBank(){let rows=LS.get('bankroll',null);
+  if(!rows)rows=DEFBOOKS.map(b=>({bookmaker:b,balance:0,max_stake:0,turnover:0,pnl:0,mug:0,sharp:0}));
+  const health=r=>!r.balance?'⚪':(r.max_stake&&r.max_stake<1000?'🔴 limit':'🟢 OK');
+  $('#banktable').innerHTML='<table class="w-full text-sm"><thead class="text-slate-400 text-xs"><tr><th class="text-left">Sázkovka</th><th>Zůstatek</th><th>Max vklad</th><th>Obrat</th><th>P/L</th><th>Zdraví</th></tr></thead><tbody>'+
+    rows.map((r,i)=>`<tr data-i="${i}" class="border-t border-slate-800"><td>${r.bookmaker}</td>
+      <td><input value="${r.balance||0}" class="bk w-20 rounded px-1" data-k="balance"></td>
+      <td><input value="${r.max_stake||0}" class="bk w-20 rounded px-1" data-k="max_stake"></td>
+      <td><input value="${r.turnover||0}" class="bk w-20 rounded px-1" data-k="turnover"></td>
+      <td><input value="${r.pnl||0}" class="bk w-20 rounded px-1" data-k="pnl"></td>
+      <td class="text-center">${health(r)}</td></tr>`).join('')+'</tbody></table>';
+  window._bankrows=rows;}
+$('#bankSave').onclick=()=>{const rows=[...document.querySelectorAll('#banktable tr[data-i]')].map(tr=>{
+    const o={bookmaker:tr.children[0].textContent};
+    tr.querySelectorAll('.bk').forEach(i=>o[i.dataset.k]=parseFloat(i.value)||0); return o;});
+  LS.set('bankroll',rows); renderBank();};
+
+$('#fbBtn').onclick=()=>{const f=+$('#fb_stake').value,oa=+$('#fb_a').value,ob=+$('#fb_b').value;
+  const cash=f*(oa-1)/ob, profit=cash*(ob-1);
+  $('#fbres').innerHTML=`Vsaď <b>${fmt(cash)} Kč</b> na opačný výsledek u sázkovky B.<br>→ jistý zisk <b class="text-emerald-400">~${fmt(profit)} Kč</b> (${(profit/f*100).toFixed(0)} % z free betu).`;};
+
+$('#findBtn').onclick=loadOpps;
+$('#source').onchange=loadOpps;
+loadOpps();
+</script>
+</body>
+</html>
