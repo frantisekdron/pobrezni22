@@ -29,6 +29,15 @@ Kurzy se berou **bez API** — importem ze zkopírovaných stránek do vlastní 
 | `examples/` | demo data (`seed_events.json`, `quotes_sample.json`, …) |
 | `tests/` | pytest testy jádra (ověřují i referenčních 13,66 %) |
 
+## 🌐 Webové rozhraní (hotové, bez závislostí)
+
+```bash
+cd webapp && python3 server.py     # pak otevři http://localhost:8000
+```
+Dashboard s kartami příležitostí, importem kurzů, deníkem, bankrollem a
+kalkulačkou bonusů. Detaily: `webapp/README.md`. (`SPEC_WEBAPP.md` je
+původní zadání / rozšířená React verze.)
+
 ## Rychlý start (čistý Python 3, žádné závislosti)
 
 ```bash

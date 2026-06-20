@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Livetime Arb Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body{background:#0b0f17;color:#e5e9f0}
+  .card{background:#131a26;border:1px solid #1f2a3a}
+  .tab.active{background:#1d4ed8;color:#fff}
+  input,select,textarea{background:#0e141f;border:1px solid #29384d;color:#e5e9f0}
+  table{border-collapse:collapse}
+  th,td{padding:.4rem .6rem}
+  .copybtn:active{transform:scale(.95)}
+</style>
+</head>
+<body class="min-h-screen">
+<div class="max-w-6xl mx-auto p-4">
+  <header class="flex items-center justify-between mb-4 flex-wrap gap-2">
+    <h1 class="text-xl font-bold">🟢 Livetime Arb Dashboard</h1>
+    <nav class="flex gap-1 text-sm" id="tabs">
+      <button class="tab active px-3 py-1.5 rounded" data-t="dash">Příležitosti</button>
+      <button class="tab px-3 py-1.5 rounded" data-t="import">Import kurzů</button>
+      <button class="tab px-3 py-1.5 rounded" data-t="bets">Deník</button>
+      <button class="tab px-3 py-1.5 rounded" data-t="bank">Bankroll</button>
+      <button class="tab px-3 py-1.5 rounded" data-t="bonus">Bonusy</button>
+    </nav>
+  </header>
+
+  <!-- DASHBOARD -->
+  <section id="dash">
+    <div class="card rounded-lg p-3 mb-4 flex flex-wrap gap-3 items-end text-sm">
+      <label>Zdroj dat<br><select id="source" class="rounded px-2 py-1 mt-1">
+        <option value="seed">Demo (25 zápasů)</option>
+        <option value="db">Moje DB (importované)</option></select></label>
+      <label>Vklad/surebet<br><input id="total" type="number" value="1000" class="rounded px-2 py-1 w-24 mt-1"></label>
+      <label>Bankroll<br><input id="bankroll" type="number" value="100000" class="rounded px-2 py-1 w-28 mt-1"></label>
+      <label>Min. marže %<br><input id="minmargin" type="number" value="0.5" step="0.5" class="rounded px-2 py-1 w-20 mt-1"></label>
+      <label>Min. EV %<br><input id="minedge" type="number" value="3" step="0.5" class="rounded px-2 py-1 w-20 mt-1"></label>
+      <label>Kelly<br><input id="kelly" type="number" value="0.25" step="0.05" class="rounded px-2 py-1 w-20 mt-1"></label>
+      <button onclick="loadOpps()" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded font-semibold">Najít</button>
+      <span id="meta" class="text-slate-400"></span>
+    </div>
+    <h2 class="font-bold mb-2">Surebety <span id="sbcount" class="text-slate-400 text-sm"></span></h2>
+    <div id="surebets" class="grid gap-3 md:grid-cols-2"></div>
+    <h2 class="font-bold mt-6 mb-2">Value bety <span id="vbcount" class="text-slate-400 text-sm"></span></h2>
+    <div id="values" class="grid gap-2"></div>
+  </section>
+
+  <!-- IMPORT -->
+  <section id="import" class="hidden">
+    <div class="card rounded-lg p-4">
+      <p class="text-sm text-slate-300 mb-2">Zkopíruj kurzy ze stránky sázkovky a vlož v blokovém formátu:</p>
+      <textarea id="paste" rows="12" class="w-full rounded p-2 font-mono text-sm" placeholder="@book tipsport
+@sport tenis
+@event Alexander Zverev | Taylor Fritz
+@market Esa v zápase | 28.5
+Nad | 3.00
+Pod | 1.78"></textarea>
+      <div class="flex gap-2 mt-2">
+        <button onclick="doIngest()" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded font-semibold">Naparsovat & uložit do DB</button>
+        <span id="ingmsg" class="text-sm text-slate-400 self-center"></span>
+      </div>
+      <div id="preview" class="mt-3 text-sm"></div>
+    </div>
+  </section>
+
+  <!-- DENÍK -->
+  <section id="bets" class="hidden">
+    <div id="betstats" class="card rounded-lg p-3 mb-3 text-sm"></div>
+    <div id="betslist"></div>
+  </section>
+
+  <!-- BANKROLL -->
+  <section id="bank" class="hidden">
+    <div class="card rounded-lg p-3">
+      <div class="flex justify-between mb-2"><h2 class="font-bold">Bankroll & zdraví účtů</h2>
+        <button onclick="saveBank()" class="bg-blue-700 hover:bg-blue-600 px-3 py-1 rounded text-sm">Uložit</button></div>
+      <div id="banktable"></div>
+      <p class="text-xs text-slate-400 mt-2">⚠ Klesající „Max vklad" = blížící se limitace účtu → zařaď mug bety, rotuj kapitál jinam.</p>
+    </div>
+  </section>
+
+  <!-- BONUSY -->
+  <section id="bonus" class="hidden">
+    <div class="card rounded-lg p-4 max-w-lg">
+      <h2 class="font-bold mb-3">Free bet → jistý zisk (2 sázkovky)</h2>
+      <div class="grid grid-cols-3 gap-2 text-sm">
+        <label>Free bet (Kč)<br><input id="fb_stake" type="number" value="1000" class="rounded px-2 py-1 w-full mt-1"></label>
+        <label>Kurz na A<br><input id="fb_a" type="number" value="2.00" step="0.01" class="rounded px-2 py-1 w-full mt-1"></label>
+        <label>Opačný na B<br><input id="fb_b" type="number" value="2.10" step="0.01" class="rounded px-2 py-1 w-full mt-1"></label>
+      </div>
+      <button onclick="calcFb()" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded font-semibold mt-3">Spočítat</button>
+      <div id="fbres" class="mt-3 text-sm"></div>
+    </div>
+  </section>
+
+  <footer class="text-xs text-slate-500 mt-8 border-t border-slate-800 pt-3">
+    ⚠ 20 %+ „jasných" surebetů reálně skoro neexistuje (chyba sázkovky → storno).
+    Hlavní riziko = limitace účtů. Jen licencované sázkovky, vlastní jméno, 18+.
+    Daně v ČR konzultuj s poradcem. Tohle není garance výplaty.
+  </footer>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const fmt = n => Math.round(n).toLocaleString('cs-CZ');
+
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  ['dash','import','bets','bank','bonus'].forEach(id=>$('#'+id).classList.add('hidden'));
+  $('#'+b.dataset.t).classList.remove('hidden');
+  if(b.dataset.t==='bets') loadBets();
+  if(b.dataset.t==='bank') loadBank();
+});
+
+async function loadOpps(){
+  const p = new URLSearchParams({source:$('#source').value, total:$('#total').value,
+    bankroll:$('#bankroll').value, min_margin:$('#minmargin').value,
+    min_edge:$('#minedge').value, kelly:$('#kelly').value});
+  const d = await (await fetch('/api/opportunities?'+p)).json();
+  $('#meta').textContent = `(zdroj: ${d.meta.events} zápasů)`;
+  $('#sbcount').textContent = d.surebets.length;
+  $('#vbcount').textContent = d.values.length;
+  $('#surebets').innerHTML = d.surebets.map(sbCard).join('') ||
+    '<p class="text-slate-500 text-sm">Žádný surebet nad zadanou marží.</p>';
+  $('#values').innerHTML = d.values.map(vbRow).join('') ||
+    '<p class="text-slate-500 text-sm">Žádný value bet nad zadaným EV.</p>';
+}
+
+function sbCard(a){
+  const rows = a.legs.map(l=>`<tr>
+    <td>${l.outcome}</td><td class="text-blue-300">${l.bookmaker}</td>
+    <td class="text-right">${l.odds.toFixed(2)}</td>
+    <td class="text-right font-semibold">${fmt(l.stake)} Kč</td>
+    <td><button class="copybtn text-xs bg-slate-700 px-2 rounded" onclick="navigator.clipboard.writeText('${fmt(l.stake)}')">⧉</button></td>
+  </tr>`).join('');
+  const ring = {high:'border-red-500',mid:'border-amber-500',low:'border-emerald-500'}[a.risk.level];
+  return `<div class="card rounded-lg p-3 border-l-4 ${ring}">
+    <div class="flex justify-between items-start">
+      <div><span class="text-2xl font-bold text-emerald-400">+${(a.margin*100).toFixed(2)}%</span>
+        <span class="ml-2 text-xs bg-slate-800 px-2 py-0.5 rounded">${a.sport}</span></div>
+      <span title="${a.risk.why}" class="text-xs cursor-help">${a.risk.label}</span>
+    </div>
+    <div class="font-semibold mt-1">${a.event}</div>
+    <div class="text-xs text-slate-400 mb-2">${a.market}</div>
+    <table class="w-full text-sm"><thead class="text-slate-400 text-xs">
+      <tr><th class="text-left">Výsledek</th><th class="text-left">Sázkovka</th>
+      <th class="text-right">Kurz</th><th class="text-right">Vklad</th><th></th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    <div class="text-sm mt-2">Výplata ~${fmt(a.payout)} Kč → <b class="text-emerald-400">zisk +${fmt(a.profit)} Kč</b>
+      <span class="text-slate-500">(Σ ${(a.sum_prob*100).toFixed(1)}%)</span></div>
+    <button onclick='betIt(${JSON.stringify(a).replace(/'/g,"&#39;")})' class="mt-2 bg-emerald-700 hover:bg-emerald-600 px-3 py-1 rounded text-sm">Vsadit (do deníku)</button>
+  </div>`;
+}
+
+function vbRow(v){
+  return `<div class="card rounded p-2 flex justify-between items-center text-sm border-l-4 border-blue-500">
+    <div><b class="text-blue-300">+${(v.edge*100).toFixed(1)}% EV</b> · ${v.event}
+      <span class="text-slate-400">· ${v.market}</span><br>
+      <span>${v.outcome} @ ${v.bookmaker} <b>${v.odds.toFixed(2)}</b>
+      <span class="text-slate-500">(fér ${(v.fair_prob*100).toFixed(0)}%)</span></span></div>
+    <div class="text-right">vklad<br><b>${fmt(v.stake)} Kč</b></div>
+  </div>`;
+}
+
+async function betIt(a){
+  await fetch('/api/bets',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({event:a.event,market:a.market,legs:a.legs,total:a.total_stake,
+      payout:a.payout,profit:a.profit,margin:a.margin,status:'open'})});
+  alert('Uloženo do deníku jako otevřená sázka.');
+}
+
+async function doIngest(){
+  const r = await (await fetch('/api/ingest',{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text:$('#paste').value})})).json();
+  $('#ingmsg').textContent = `Naparsováno ${r.parsed}, uloženo ${r.saved} kotací.`;
+  $('#preview').innerHTML = r.preview.length ? '<table class="w-full text-xs"><thead class="text-slate-400">'+
+    '<tr><th class="text-left">Sázkovka</th><th class="text-left">Zápas</th><th class="text-left">Trh</th>'+
+    '<th class="text-left">Výsledek</th><th class="text-right">Kurz</th></tr></thead><tbody>'+
+    r.preview.map(q=>`<tr><td>${q.bookmaker}</td><td>${q.home} – ${q.away}</td><td>${q.market}${q.line?' '+q.line:''}</td><td>${q.outcome}</td><td class="text-right">${q.odds}</td></tr>`).join('')+
+    '</tbody></table>' : '';
+}
+
+async function loadBets(){
+  const d = await (await fetch('/api/bets')).json();
+  const s = d.stats;
+  $('#betstats').innerHTML = `Sázek: <b>${s.bets}</b> · Realizovaný P/L:
+    <b class="${s.realized_pnl>=0?'text-emerald-400':'text-red-400'}">${fmt(s.realized_pnl)} Kč</b>`;
+  $('#betslist').innerHTML = d.bets.length ? '<table class="w-full text-sm card rounded"><thead class="text-slate-400 text-xs">'+
+    '<tr><th class="text-left">Zápas</th><th class="text-left">Trh</th><th class="text-right">Vklad</th>'+
+    '<th class="text-right">Oček. zisk</th><th>Stav</th></tr></thead><tbody>'+
+    d.bets.map(b=>`<tr class="border-t border-slate-800"><td>${b.event||''}</td><td class="text-slate-400">${b.market||''}</td>
+      <td class="text-right">${fmt(b.total||0)}</td><td class="text-right text-emerald-400">+${fmt(b.profit||0)}</td>
+      <td><select onchange="setStatus(${b.id},this.value)" class="rounded text-xs px-1 py-0.5">
+        ${['open','won','lost','void','settled'].map(s=>`<option ${s===b.status?'selected':''}>${s}</option>`).join('')}
+      </select></td></tr>`).join('')+'</tbody></table>'
+    : '<p class="text-slate-500 text-sm">Zatím žádné sázky. Vsaď z karty na záložce Příležitosti.</p>';
+}
+async function setStatus(id,st){
+  await fetch('/api/bets/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({status:st})}); loadBets();
+}
+
+const DEFBOOKS=['tipsport','betano','fortuna','bet365'];
+async function loadBank(){
+  const d = await (await fetch('/api/bankroll')).json();
+  let rows = d.bankroll;
+  if(!rows.length) rows = DEFBOOKS.map(b=>({bookmaker:b,balance:0,max_stake:0,turnover:0,pnl:0,mug:0,sharp:0}));
+  $('#banktable').innerHTML = '<table class="w-full text-sm"><thead class="text-slate-400 text-xs">'+
+    '<tr><th class="text-left">Sázkovka</th><th>Zůstatek</th><th>Max vklad</th><th>Obrat</th><th>P/L</th><th>Mug/Ostré</th><th>Zdraví</th></tr></thead><tbody>'+
+    rows.map((r,i)=>`<tr data-i="${i}" class="border-t border-slate-800">
+      <td>${r.bookmaker}</td>
+      <td><input value="${r.balance||0}" class="bk w-20 rounded px-1" data-k="balance"></td>
+      <td><input value="${r.max_stake||0}" class="bk w-20 rounded px-1" data-k="max_stake"></td>
+      <td><input value="${r.turnover||0}" class="bk w-20 rounded px-1" data-k="turnover"></td>
+      <td><input value="${r.pnl||0}" class="bk w-20 rounded px-1" data-k="pnl"></td>
+      <td class="text-center">${r.mug||0}:${r.sharp||0}</td>
+      <td class="text-center">${health(r)}</td></tr>`).join('')+'</tbody></table>';
+  window._bankrows = rows;
+}
+function health(r){
+  if(!r.balance) return '⚪';
+  if(r.max_stake && r.max_stake < 1000) return '🔴 limit';
+  return '🟢 OK';
+}
+async function saveBank(){
+  const rows = [...document.querySelectorAll('#banktable tr[data-i]')].map(tr=>{
+    const o={bookmaker:tr.children[0].textContent};
+    tr.querySelectorAll('.bk').forEach(i=>o[i.dataset.k]=parseFloat(i.value)||0);
+    const prev=window._bankrows[+tr.dataset.i]; o.mug=prev.mug||0; o.sharp=prev.sharp||0;
+    return o;});
+  await fetch('/api/bankroll',{method:'PUT',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({bankroll:rows})});
+  loadBank();
+}
+
+async function calcFb(){
+  const r = await (await fetch('/api/freebet/calc',{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({mode:'free2',free_stake:$('#fb_stake').value,
+      odds_a:$('#fb_a').value,odds_b:$('#fb_b').value})})).json();
+  $('#fbres').innerHTML = `Vsaď <b>${fmt(r.cash)} Kč</b> na opačný výsledek u sázkovky B.<br>
+    → jistý zisk <b class="text-emerald-400">~${fmt(r.profit)} Kč</b> (${r.rate} % z free betu).`;
+}
+
+loadOpps();
+</script>
+</body>
+</html>

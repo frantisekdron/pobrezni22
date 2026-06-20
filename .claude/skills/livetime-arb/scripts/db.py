@@ -51,7 +51,18 @@ CREATE TABLE IF NOT EXISTS bets (
     payout    REAL,
     profit    REAL,
     margin    REAL,
-    status    TEXT DEFAULT 'open'   -- open / won / settled / voided
+    status    TEXT DEFAULT 'open'   -- open / won / lost / void / settled
+);
+
+CREATE TABLE IF NOT EXISTS bankroll (
+    bookmaker  TEXT PRIMARY KEY,
+    balance    REAL DEFAULT 0,
+    max_stake  REAL DEFAULT 0,
+    turnover   REAL DEFAULT 0,
+    pnl        REAL DEFAULT 0,
+    mug        INTEGER DEFAULT 0,
+    sharp      INTEGER DEFAULT 0,
+    updated_at REAL
 );
 """
 
@@ -105,6 +116,49 @@ def log_bet(bet: dict, path: str = None) -> int:
              bet.get("total"), bet.get("payout"), bet.get("profit"),
              bet.get("margin"), bet.get("status", "open")))
         return cur.lastrowid
+
+
+def list_bets(path: str = None) -> list:
+    with connect(path) as con:
+        cur = con.execute("SELECT * FROM bets ORDER BY ts DESC")
+        rows = []
+        for r in cur.fetchall():
+            d = dict(r)
+            try:
+                d["legs"] = json.loads(d.pop("legs_json") or "[]")
+            except ValueError:
+                d["legs"] = []
+            rows.append(d)
+        return rows
+
+
+def set_bet_status(bet_id: int, status: str, path: str = None) -> bool:
+    with connect(path) as con:
+        cur = con.execute("UPDATE bets SET status=? WHERE id=?",
+                          (status, bet_id))
+        return cur.rowcount > 0
+
+
+def get_bankroll(path: str = None) -> list:
+    with connect(path) as con:
+        cur = con.execute("SELECT bookmaker,balance,max_stake,turnover,pnl,"
+                          "mug,sharp,updated_at FROM bankroll ORDER BY bookmaker")
+        return [dict(r) for r in cur.fetchall()]
+
+
+def upsert_bankroll(row: dict, path: str = None):
+    import time as _t
+    with connect(path) as con:
+        con.execute(
+            "INSERT INTO bankroll(bookmaker,balance,max_stake,turnover,pnl,"
+            "mug,sharp,updated_at) VALUES(?,?,?,?,?,?,?,?) "
+            "ON CONFLICT(bookmaker) DO UPDATE SET balance=excluded.balance,"
+            "max_stake=excluded.max_stake,turnover=excluded.turnover,"
+            "pnl=excluded.pnl,mug=excluded.mug,sharp=excluded.sharp,"
+            "updated_at=excluded.updated_at",
+            (row["bookmaker"], row.get("balance", 0), row.get("max_stake", 0),
+             row.get("turnover", 0), row.get("pnl", 0), row.get("mug", 0),
+             row.get("sharp", 0), _t.time()))
 
 
 def stats(path: str = None) -> dict:
