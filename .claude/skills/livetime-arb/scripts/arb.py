@@ -132,13 +132,25 @@ def find_arb(
     total_stake: float = 1000.0,
     min_margin: float = 0.0,
     round_to: Optional[int] = 1,
+    min_books: int = 2,
+    max_margin: float = 0.20,
 ) -> Optional[Arb]:
-    """Vrátí Arb, jen pokud marže >= min_margin, jinak None."""
+    """Vrátí Arb, jen pokud marže v <min_margin, max_margin> a nohy jsou
+    aspoň ze `min_books` RŮZNÝCH sázkovek.
+
+    Pojistky proti nesmyslům:
+    - `min_books=2`: arbitráž musí být napříč sázkovkami. Když všechny nohy
+      vyjdou u jedné sázkovky, je to vždy chyba dat (sázkovka má marži) → None.
+    - `max_margin=0.20`: marže nad 20 % je u reálných trhů prakticky vždy
+      chyba parsování / nesedící trhy → raději nezobrazit než lhát.
+    """
     legs = best_legs_across_books(market_quotes)
     if len(legs) < 2:
         return None
+    if len({l.bookmaker for l in legs}) < min_books:
+        return None
     S, margin, legs, payout, profit = compute_arb(legs, total_stake, round_to)
-    if margin < min_margin:
+    if margin < min_margin or margin > max_margin:
         return None
     return Arb(
         sport=sport, event=event, market=market, legs=legs,

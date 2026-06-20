@@ -15,6 +15,7 @@ from arb import Leg, compute_arb, find_arb           # noqa: E402
 from analyze import fair_probs, kelly_fraction, find_value_bets  # noqa: E402
 from normalize import merge_quotes, names_match, norm_outcome    # noqa: E402
 from freebet import free_two_books                   # noqa: E402
+import canon                                          # noqa: E402
 
 
 def approx(a, b, tol=0.5):
@@ -40,11 +41,30 @@ def test_not_an_arb():
 
 
 def test_threeway_arb():
-    """1X2 3.50/3.60/3.90 => ~21.97 % arb."""
+    """1X2 3.50/3.60/3.90 => ~21.97 % arb (max_margin zvednut, jinak filtr skryje)."""
     a = find_arb("fotbal", "A-B", "1X2",
-                 {"1": {"b": 3.50}, "X": {"b2": 3.60}, "2": {"b3": 3.90}}, 1000)
+                 {"1": {"b": 3.50}, "X": {"b2": 3.60}, "2": {"b3": 3.90}}, 1000,
+                 max_margin=1.0)
     assert approx(a.margin * 100, 21.97, 0.1)
     assert len(a.legs) == 3
+
+
+def test_filter_same_bookmaker():
+    """Obě nohy u jedné sázkovky = chyba dat → None."""
+    a = find_arb("x", "y", "O/U",
+                 {"Over": {"betano": 3.50}, "Under": {"betano": 3.50}}, 1000)
+    assert a is None
+
+
+def test_filter_absurd_margin():
+    """Marže > 20 % (default strop) = nejspíš chyba → None, i napříč sázkovkami."""
+    a = find_arb("x", "y", "m",
+                 {"A": {"book1": 3.5}, "B": {"book2": 3.5}}, 1000)
+    assert a is None
+    # se zvednutým stropem se zobrazí
+    assert find_arb("x", "y", "m",
+                    {"A": {"book1": 3.5}, "B": {"book2": 3.5}}, 1000,
+                    max_margin=1.0) is not None
 
 
 def test_best_odds_across_books():
@@ -101,8 +121,48 @@ def test_merge_quotes_pairs_four_books():
     merged = merge_quotes(quotes)
     assert len(merged["events"]) == 1          # spárováno do jednoho zápasu
     mkt = merged["events"][0]["markets"][0]
-    assert "Over 28.5" in mkt["quotes"]
-    assert "Under 28.5" in mkt["quotes"]
+    assert mkt["type"] == "OU"                 # kanonický typ
+    assert "OVER" in mkt["quotes"] and "UNDER" in mkt["quotes"]
+    assert mkt["quotes"]["OVER"]["tipsport"] == 3.00
+    assert mkt["quotes"]["UNDER"]["bet365"] == 1.83
+
+
+def test_canon_blocks_garbage():
+    """Betbuilder / exotické trhy se nekanonizují (nearbitrážovatelné)."""
+    assert canon.canon("Góly Dembele (Betbuilder: 3 příležitosti)", "3 příležitosti", None) is None
+    assert canon.canon("Asijský handicap", "Německo -0.75", None) is None
+    assert canon.canon("Přesný výsledek", "2 - 1", None) is None
+
+
+def test_canon_over_under():
+    """Nad/Pod gólů → OU se subjektem goals a hranicí."""
+    c = canon.canon("Počet gólů v zápasu", "Více než 2.5", 2.5)
+    assert c["type"] == "OU" and c["code"] == "OVER" and c["subject"] == "goals" and c["line"] == 2.5
+    c = canon.canon("Počet rohů v zápasu", "Méně než 9.5", None)
+    assert c["type"] == "OU" and c["code"] == "UNDER" and c["subject"] == "corners" and c["line"] == 9.5
+    # góly a rohy se NESMÍ spárovat (jiný subjekt)
+    assert canon.canon("Počet gólů", "Nad 2.5", 2.5)["key"] != canon.canon("Počet rohů", "Nad 2.5", 2.5)["key"]
+
+
+def test_merge_drops_incomplete_market():
+    """Trh jen s jednou stranou (Over bez Under) se nezobrazí."""
+    merged = merge_quotes([
+        {"bookmaker": "tipsport", "sport": "fotbal", "home": "A", "away": "B",
+         "market": "Počet rohů v zápasu", "outcome": "Nad 9.5", "odds": 1.9}])
+    assert merged["events"] == []          # neúplný trh → žádný zápas
+
+
+def test_real_cross_book_arb_via_merge():
+    """O/U gólů 2.5 napříč dvěma sázkovkami → platná arbitráž."""
+    merged = merge_quotes([
+        {"bookmaker": "tipsport", "sport": "fotbal", "home": "Slavia", "away": "Sparta",
+         "market": "Počet gólů v zápasu", "outcome": "Více než 2.5", "odds": 2.10},
+        {"bookmaker": "fortuna", "sport": "fotbal", "home": "Slavia", "away": "Sparta",
+         "market": "Počet gólů v zápasu", "outcome": "Méně než 2.5", "odds": 2.05}])
+    m = merged["events"][0]["markets"][0]
+    a = find_arb("fotbal", "Slavia – Sparta", m["market"], m["quotes"], 1000)
+    assert a is not None and a.margin > 0
+    assert len({l.bookmaker for l in a.legs}) == 2
 
 
 def test_freebet_two_books_profit():

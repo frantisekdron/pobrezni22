@@ -55,11 +55,20 @@ def kelly_fraction(odds: float, p: float) -> float:
 
 
 def find_value_bets(quotes: dict, min_edge: float, bankroll: float,
-                    kelly: float) -> list:
-    """Vrátí value bety: list dict s book/outcome/odds/edge/fair/stake."""
+                    kelly: float, min_books: int = 2,
+                    max_edge: float = 0.20) -> list:
+    """Vrátí value bety: list dict s book/outcome/odds/edge/fair/stake.
+
+    Pojistky: férová pravd. musí vzejít z konsenzu aspoň `min_books` sázkovek
+    (jinak je „value" jen artefakt jediné sázkovky), a výhoda nad `max_edge`
+    (20 %) se zahodí jako nejspíš chyba dat.
+    """
     fair = fair_probs(quotes)
     out = []
     if len(fair) < 2:
+        return out
+    all_books = {bk for books in quotes.values() for bk in books}
+    if len(all_books) < min_books:           # potřebujeme konsenzus napříč sázkovkami
         return out
     for oc, books in quotes.items():
         fp = fair.get(oc)
@@ -67,7 +76,7 @@ def find_value_bets(quotes: dict, min_edge: float, bankroll: float,
             continue
         for book, odds in books.items():
             edge = odds * fp - 1.0          # EV na 1 Kč vkladu
-            if edge >= min_edge:
+            if min_edge <= edge <= max_edge:
                 f = kelly_fraction(odds, fp) * kelly
                 out.append({
                     "outcome": oc, "bookmaker": book, "odds": odds,

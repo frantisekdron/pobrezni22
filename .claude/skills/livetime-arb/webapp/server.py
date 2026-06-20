@@ -75,12 +75,14 @@ def risk_tier(margin: float) -> dict:
 # ── sestavení příležitostí ────────────────────────────────────────────────
 
 def build_opportunities(events: dict, total, bankroll, kelly,
-                        min_margin, min_edge, round_to=10) -> dict:
+                        min_margin, min_edge, round_to=10,
+                        max_margin=20.0, min_books=2) -> dict:
     surebets, values = [], []
     for ev in events.get("events", []):
         for m in ev.get("markets", []):
             a = find_arb(ev["sport"], ev["event"], m["market"], m["quotes"],
-                         total, min_margin / 100.0, round_to)
+                         total, min_margin / 100.0, round_to,
+                         min_books=min_books, max_margin=max_margin / 100.0)
             if a:
                 d = a.to_dict()
                 d["risk"] = risk_tier(a.margin)
@@ -157,6 +159,8 @@ class Handler(BaseHTTPRequestHandler):
                 min_margin=float(q.get("min_margin", 0)),
                 min_edge=float(q.get("min_edge", 2)),
                 round_to=int(q.get("round", 10)),
+                max_margin=float(q.get("max_margin", 20)),
+                min_books=int(q.get("min_books", 2)),
             )
             data["meta"] = {"source": q.get("source", "seed"),
                             "events": len(events.get("events", []))}

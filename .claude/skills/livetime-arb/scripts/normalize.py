@@ -96,45 +96,50 @@ def market_key(market: str, line) -> str:
 # ── sloučení kotací do events JSON ────────────────────────────────────────
 
 def merge_quotes(quotes: list) -> dict:
-    """list kotací -> events JSON pro arb.py scan.
+    """list kotací -> events JSON pro arb.py.
 
-    Zápasy páruje fuzzy klastrováním (překryv příjmení), takže
-    'Alexander Zverev' a 'Zverev A.' skončí v jednom zápase.
+    Striktní kanonizace: každá kotace se přes canon.canon() zařadí do jasně
+    definovaného typu trhu (1X2/WINNER2/OU/BTTS) a kódu výsledku, nebo se
+    ZAHODÍ. Zápasy páruje fuzzy klastrováním. Do výstupu jdou jen trhy s
+    KOMPLETNÍ sadou opačných výsledků (např. OVER i UNDER téže hranice).
     """
-    clusters = []   # každý: dict se sport/home/away/markets(mk->oc->{book:odds})
+    import canon as _canon
+
+    clusters = []   # každý: {sport, home, away, markets:{key:{type,subject,line,codes}}}
 
     for q in quotes:
         sport = q.get("sport", "?")
         home = q.get("home", "?")
         away = q.get("away", "?")
-        mk = market_key(q.get("market", ""), q.get("line"))
-        oc = norm_outcome(q.get("outcome", ""))
-        line = q.get("line")
-        if line is not None and oc in ("Over", "Under"):
-            oc = f"{oc} {float(line):g}"
+        try:
+            odds = float(str(q.get("odds")).replace(",", "."))
+        except (TypeError, ValueError):
+            continue
+        if not (1.01 <= odds <= 1000):
+            continue
+        c = _canon.canon(q.get("market", ""), q.get("outcome", ""),
+                         q.get("line"), home, away, sport)
+        if not c:
+            continue
         book = q.get("bookmaker", "?")
-        odds = float(q["odds"])
 
         cl = None
-        for c in clusters:
-            if event_matches(sport, home, away, c["sport"], c["home"], c["away"]):
-                cl = c
+        for cc in clusters:
+            if event_matches(sport, home, away, cc["sport"], cc["home"], cc["away"]):
+                cl = cc
                 break
         if cl is None:
-            cl = {
-                "sport": sport, "home": home, "away": away,
-                "markets": defaultdict(lambda: defaultdict(dict)),
-                "mkt_names": {},
-            }
+            cl = {"sport": sport, "home": home, "away": away, "markets": {}}
             clusters.append(cl)
-        # preferuj delší (úplnější) jména pro zobrazení
         if len(home) > len(cl["home"]):
             cl["home"] = home
         if len(away) > len(cl["away"]):
             cl["away"] = away
-        cl["mkt_names"][mk] = q.get("market", mk)
 
-        prev = cl["markets"][mk][oc]
+        m = cl["markets"].setdefault(c["key"], {
+            "type": c["type"], "subject": c["subject"], "line": c["line"],
+            "codes": defaultdict(dict)})
+        prev = m["codes"][c["code"]]
         if book not in prev or odds > prev[book]:
             prev[book] = odds
 
@@ -142,12 +147,15 @@ def merge_quotes(quotes: list) -> dict:
     for c in clusters:
         ev = {"sport": c["sport"],
               "event": f"{c['home']} – {c['away']}", "markets": []}
-        for mk, quotes_by_oc in c["markets"].items():
-            if len(quotes_by_oc) < 2:   # arbitráž potřebuje ≥2 výsledky
+        for mk, m in c["markets"].items():
+            req = _canon.REQUIRED.get(m["type"], set())
+            have = set(m["codes"].keys())
+            if not req or not req.issubset(have):    # neúplný trh → vynech
                 continue
             ev["markets"].append({
-                "market": c["mkt_names"].get(mk, mk),
-                "quotes": {oc: dict(books) for oc, books in quotes_by_oc.items()},
+                "type": m["type"], "line": m["line"],
+                "market": _canon.label(m["type"], m["subject"], m["line"]),
+                "quotes": {code: dict(m["codes"][code]) for code in req},
             })
         if ev["markets"]:
             out["events"].append(ev)
