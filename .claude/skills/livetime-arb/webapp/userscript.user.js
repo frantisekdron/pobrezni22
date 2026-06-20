@@ -12,7 +12,7 @@
 // @match        https://*.bet365.com/*
 // @grant        GM_xmlhttpRequest
 // @connect      localhost
-// @run-at       document-idle
+// @run-at       document-start
 // ==/UserScript==
 /*
   POZNÁMKA K PŘESNOSTI:
@@ -38,6 +38,60 @@
 
   const ODDS_RE = /^\d{1,3}[.,]\d{1,2}$/;
   const clean = s => (s || "").replace(/\s+/g, " ").trim();
+
+  // ════════════════════════════════════════════════════════════════
+  //  AUTOMATICKÝ ODCHYT API  (hlavní mechanismus)
+  //  Stránka sázkovky si sama stahuje kurzy přes interní JSON API.
+  //  Tyhle hooky zachytí KAŽDOU takovou odpověď a pošlou ji do
+  //  dashboardu — takže na přehledu soutěže získáš VŠECHNY zápasy
+  //  najednou, automaticky, bez klikání a bez scrapování DOMu.
+  // ════════════════════════════════════════════════════════════════
+  const RAW_URL = "http://localhost:" + PORT + "/api/raw";
+  const RAWMATCH = /offer|event|match|sport|odds|kurz|nab[ií]dka|z[aá]pas|prematch|live|market|selection|outcome|fixture|competition|tournament|betoffer/i;
+  let captured = 0, statusEl = null;
+  const setStatus = s => { if (statusEl) statusEl.textContent = s; };
+
+  function forwardRaw(url, text) {
+    if (!text || text.length < 150 || text.length > 4e6) return;
+    if (!RAWMATCH.test(url) && !RAWMATCH.test(text.slice(0, 3000))) return;
+    let json; try { json = JSON.parse(text); } catch (e) { return; }
+    captured++; setStatus("📡 zachyceno API odpovědí: " + captured + " (jdou do dashboardu)");
+    GM_xmlhttpRequest({
+      method: "POST", url: RAW_URL,
+      headers: { "Content-Type": "application/json" },
+      data: JSON.stringify({ bookmaker: BOOK, url: String(url).slice(0, 300), json: json }),
+      onerror: () => setStatus("❌ dashboard neběží? Spusť server.py (port " + PORT + ")"),
+    });
+  }
+
+  (function hookFetch() {
+    const _f = window.fetch;
+    if (!_f) return;
+    window.fetch = function () {
+      const p = _f.apply(this, arguments);
+      try {
+        p.then(res => { try { res.clone().text().then(t => forwardRaw(res.url || arguments[0], t)).catch(() => {}); } catch (e) {} }).catch(() => {});
+      } catch (e) {}
+      return p;
+    };
+  })();
+
+  (function hookXHR() {
+    const _open = XMLHttpRequest.prototype.open, _send = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.open = function (m, url) { this.__url = url; return _open.apply(this, arguments); };
+    XMLHttpRequest.prototype.send = function () {
+      this.addEventListener("load", () => {
+        try {
+          const ct = this.getResponseHeader && (this.getResponseHeader("content-type") || "");
+          if (this.responseType === "json") forwardRaw(this.__url || "", JSON.stringify(this.response));
+          else if (!this.responseType || this.responseType === "text") {
+            if (/json/i.test(ct) || /^[\s]*[\[{]/.test(this.responseText || "")) forwardRaw(this.__url || "", this.responseText);
+          }
+        } catch (e) {}
+      });
+      return _send.apply(this, arguments);
+    };
+  })();
 
   // nadpis trhu = krátký český text typu „… v zápasu", „Výsledek zápasu" …
   const MARKET_RE = /(v z[aá]pasu|v[yý]sledek z[aá]pasu|po[cč]et (g[oó]l[uů]|roh[uů]|karet|tref|gem|set)|kdo (d[aá]|bude)|v[ií]ce roh[uů]|padne g[oó]l|ka[zž]d[yý] t[yý]m|vst[rř]el|hlavou|dvojtip|handicap|polo[cč]as|p[rř]esn[yý] v[yý]sledek|oba t[yý]my|s[aá]zka bez|celkem g[oó]l|v[ií]t[eě]z|asijsk|1\. ?pol|2\. ?pol|\bBTTS\b)/i;
@@ -127,26 +181,24 @@
   }
 
   // ── plovoucí ovládací panel ──────────────────────────────────────
-  let auto = null, statusEl;
-  function setStatus(s) { if (statusEl) statusEl.textContent = s; }
+  let auto = null;
   function panel() {
+    if (document.querySelector("#la_box")) return;
     const box = document.createElement("div");
-    box.style.cssText = "position:fixed;z-index:999999;right:12px;bottom:12px;background:#0b0f17;color:#e5e9f0;border:1px solid #1d4ed8;border-radius:10px;padding:10px;font:12px system-ui;width:230px;box-shadow:0 6px 24px #000a";
+    box.id = "la_box";
+    box.style.cssText = "position:fixed;z-index:2147483647;right:12px;bottom:12px;background:#0b0f17;color:#e5e9f0;border:1px solid #1d4ed8;border-radius:10px;padding:10px;font:12px system-ui;width:250px;box-shadow:0 6px 24px #000a";
     box.innerHTML = `<b>🟢 Livetime Arb · ${BOOK}</b>
-      <div style="margin:6px 0">Sport: <input id="la_sport" value="${localStorage.getItem("la_sport")||""}" placeholder="tenis" style="width:70px;background:#0e141f;color:#fff;border:1px solid #29384d;border-radius:4px">
+      <div style="margin:6px 0;color:#94a3b8">Automaticky odchytávám API stránky. Otevři <b>přehled soutěže / nadcházející</b> a roluj — zachytí se všechny zápasy.</div>
+      <div style="margin:6px 0">Sport: <input id="la_sport" value="${localStorage.getItem("la_sport")||""}" placeholder="fotbal" style="width:70px;background:#0e141f;color:#fff;border:1px solid #29384d;border-radius:4px">
       Port: <input id="la_port" value="${PORT}" style="width:48px;background:#0e141f;color:#fff;border:1px solid #29384d;border-radius:4px"></div>
-      <button id="la_grab" style="background:#1d4ed8;color:#fff;border:0;border-radius:6px;padding:5px 8px;cursor:pointer">Sejmi & odešli</button>
-      <button id="la_auto" style="background:#334155;color:#fff;border:0;border-radius:6px;padding:5px 8px;cursor:pointer">Auto 20s</button>
-      <div id="la_status" style="margin-top:6px;color:#94a3b8">připraveno</div>`;
+      <button id="la_grab" style="background:#334155;color:#fff;border:0;border-radius:6px;padding:5px 8px;cursor:pointer" title="záložní sběr z DOMu">Sejmi DOM (záloha)</button>
+      <div id="la_status" style="margin-top:6px;color:#94a3b8">📡 čekám na data stránky…</div>`;
     document.body.appendChild(box);
     statusEl = box.querySelector("#la_status");
+    if (captured) setStatus("📡 zachyceno API odpovědí: " + captured);
     box.querySelector("#la_sport").onchange = e => localStorage.setItem("la_sport", e.target.value);
     box.querySelector("#la_port").onchange = e => localStorage.setItem("la_port", e.target.value);
     box.querySelector("#la_grab").onclick = send;
-    box.querySelector("#la_auto").onclick = e => {
-      if (auto) { clearInterval(auto); auto = null; e.target.textContent = "Auto 20s"; e.target.style.background = "#334155"; }
-      else { auto = setInterval(send, 20000); send(); e.target.textContent = "Auto ON"; e.target.style.background = "#16a34a"; }
-    };
   }
   if (document.body) panel(); else window.addEventListener("DOMContentLoaded", panel);
 })();

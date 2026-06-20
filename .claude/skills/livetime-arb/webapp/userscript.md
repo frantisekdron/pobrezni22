@@ -1,53 +1,50 @@
-# Automatický sběr kurzů přes TVŮJ prohlížeč (userscript)
+# Automatický sběr VŠECH kurzů (odchyt API) — userscript
 
-Tohle je ta „automatická" cesta — kód, který **běží v tvém prohlížeči** na
-stránkách sázkovek, sám sebere **všechny zobrazené kurzy (všechny trhy)** a
-pošle je do dashboardu. Tvoje IP + tvůj browser → žádné 403. Já (AI v sandboxu)
-do tvého prohlížeče nevidím, takže ti dávám tohle: nainstaluješ jednou, pak to
-jede automaticky.
+Žádné klikání zápas po zápasu. Skript běží v tvém prohlížeči a **odchytává
+datový tok, který si stránka sázkovky sama stahuje** (její interní JSON API).
+Když otevřeš přehled soutěže / nadcházející zápasy, stránka načte **desítky
+zápasů najednou** — a skript ten JSON zachytí a pošle do dashboardu. Plně
+automaticky, tvoje IP + tvá relace → žádné 403.
 
-## Instalace (5 minut)
+## Instalace
 
-1. Nainstaluj rozšíření **Tampermonkey** (Chrome/Edge/Brave/Firefox/Safari).
-2. Spusť dashboard na Macu: `cd webapp && python3 server.py` (poběží na :8000).
-3. V Tampermonkey → *Vytvořit nový skript* → smaž obsah → vlož celý
-   `webapp/userscript.user.js` → ulož (Cmd+S).
-4. Otevři živou stránku sázkovky (Tipsport / Fortuna / Betano / bet365).
-   Vpravo dole naskočí panel **🟢 Livetime Arb**.
-5. Vyplň **Sport** (např. tenis), klikni **Sejmi & odešli** — nebo **Auto 20s**
-   pro průběžný sběr. Kurzy se pošlou do dashboardu.
-6. V dashboardu → **Příležitosti** → *Zdroj dat* na **„Moje DB"** → spočítají
-   se surebety a value bety ze **všech** stažených trhů.
+1. Nainstaluj **Tampermonkey** (rozšíření prohlížeče).
+2. Spusť dashboard: `cd webapp && python3 server.py` (port 8000).
+3. Tampermonkey → *Vytvořit nový skript* → vlož celý `userscript.user.js` →
+   ulož (Cmd+S).
 
-Zopakuj na druhé sázkovce (stejné zápasy) → appka je spáruje a porovná.
+## Použití (automatické)
 
-## Doporučení: sbírej PREMATCH, ne live
+1. Otevři sázkovku a dej **přehled** — celý fotbal, „Nadcházející", soutěž
+   (MS 2026), apod. (Ne jeden zápas — celý seznam.)
+2. **Reloadni stránku** (aby se hooky chytly i prvního načtení) a kousek
+   **roluj** (doladuje se lazy-load dalších zápasů).
+3. Panel vpravo dole ukazuje: `📡 zachyceno API odpovědí: N`.
+4. Otevři **http://localhost:8000/api/raw** — uvidíš seznam zachycených
+   odpovědí (sázkovka, velikost, URL).
 
-Nejjednodušší a nejbezpečnější je sbírat **prematch** kurzy (zápasy před
-výkopem): jsou stabilní, drží dlouho, obě nohy v klidu stihneš (skoro žádný
-leg risk) a sbírají se snáz. Otevři přehled lig / nadcházejících zápasů a
-nech panel „Sejmi & odešli" projet. Live je bonus, ne základ. Tomu odpovídá i
-nižší, ale jistější marže (0,5–2 %).
+## Důležité — jeden krok spolupráce
 
-## Důležité / omezení
+Každá sázkovka má **jiný tvar JSONu**. Aby z toho dashboard udělal kurzy,
+musím pro každou sázkovku napsat malý parser. K tomu potřebuju **jednu ukázku**:
 
-- **Přesnost:** generický scanner bere každý prvek, co vypadá jako kurz, a
-  hledá k němu nejbližší popisek a nadpis trhu. Zabere hodně, ale **názvy trhů
-  a výsledků nemusí sedět vždy** (každá sázkovka má jinou, často obfuskovanou
-  stránku). Surebet potřebuje správně spárované opačné strany — po stažení si
-  v Příležitostech zkontroluj, že nohy dávají smysl.
-- **Přesné adaptéry:** v `userscript.user.js` je `ADAPTERS = {}` — sem patří
-  přesné selektory pro každou sázkovku. **Pošli mi ukázku** (zkopíruj kus HTML
-  jednoho živého zápasu z jedné sázkovky, nebo screenshot DOM v DevTools) a já
-  ti adaptér doplním, ať to vytahuje názvy trhů i hranice přesně.
-- **Mixed-content:** skript posílá data přes `GM_xmlhttpRequest` (privilegovaně
-  přes Tampermonkey), takže https stránka může poslat na http://localhost.
-  Proto je nutný Tampermonkey, ne obyčejný bookmarklet.
-- **ToS:** čteš data ze své vlastní relace pro osobní použití. Nepřetěžuj
-  servery (Auto 20s stačí), nedistribuuj data. Sázej jen u licencovaných
-  sázkovek, 18+.
+- Otevři **http://localhost:8000/api/raw/sample?book=tipsport** (a totéž pro
+  `fortuna`, `betano`) → zobrazí se zachycený JSON.
+- Pošli mi ho (stačí zkopírovat) → napíšu parser → od té chvíle se kurzy
+  parsují automaticky a sypou do Příležitostí.
 
-## Nouzová varianta (když userscript zlobí)
+Tohle je nutné udělat **jen jednou na sázkovku**. Pak už je sběr plně
+automatický (otevřeš přehled → vše naskočí v dashboardu).
 
-Záložka **Import → Volný text**: na stránce označ kurzy myší, zkopíruj, vlož,
-doplň kontext (sázkovka/zápas/trh). Viz `odds-grabber.md`.
+## Záloha: DOM scanner
+
+V panelu je tlačítko **„Sejmi DOM (záloha)"** — když by API odchyt selhal,
+vytáhne kurzy z viditelné stránky (méně spolehlivé, viz `odds-grabber.md`).
+
+## Poznámky
+
+- Skript posílá data lokálně přes `GM_xmlhttpRequest` (proto Tampermonkey,
+  ne bookmarklet — kvůli mixed-content https→localhost).
+- Sbírej hlavně **prematch** (stabilní, snadné).
+- Čteš data ze své relace pro osobní použití; nepřetěžuj servery. 18+,
+  jen licencované sázkovky.

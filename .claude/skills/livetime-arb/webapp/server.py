@@ -15,9 +15,28 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
+
+# poslední zachycené syrové API odpovědi ze stránek sázkovek (z userscriptu)
+RAW = []
+
+def save_raw(book, url, jsonobj):
+    txt = json.dumps(jsonobj, ensure_ascii=False)
+    RAW.insert(0, {"bookmaker": book, "url": url, "bytes": len(txt),
+                   "ts": time.time(), "json": jsonobj})
+    del RAW[300:]
+    try:
+        d = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "raw")
+        os.makedirs(d, exist_ok=True)
+        safe = re.sub(r"[^a-zA-Z0-9]+", "_", (book + "_" + url))[-90:] or "raw"
+        with open(os.path.join(d, safe + ".json"), "w", encoding="utf-8") as f:
+            f.write(txt)
+    except Exception:
+        pass
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SCRIPTS = os.path.join(HERE, "..", "scripts")
@@ -143,6 +162,17 @@ class Handler(BaseHTTPRequestHandler):
                             "events": len(events.get("events", []))}
             return self._send(200, data)
 
+        if u.path == "/api/raw":            # přehled zachycených API odpovědí
+            return self._send(200, {"count": len(RAW), "captures": [
+                {"bookmaker": r["bookmaker"], "url": r["url"][:200],
+                 "bytes": r["bytes"], "ts": r["ts"]} for r in RAW[:200]]})
+        if u.path == "/api/raw/sample":     # poslední celá odpověď (k rozboru)
+            book = q.get("book")
+            for r in RAW:
+                if not book or r["bookmaker"] == book:
+                    return self._send(200, r["json"])
+            return self._send(404, {"error": "zatím nic zachyceno"})
+
         if u.path == "/api/events":
             return self._send(200, load_events(q.get("source", "seed")))
         if u.path == "/api/bets":
@@ -157,6 +187,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         u = urlparse(self.path)
         b = self._body()
+
+        if u.path == "/api/raw":            # userscript posílá syrový API JSON
+            save_raw(b.get("bookmaker", "?"), b.get("url", ""), b.get("json"))
+            return self._send(200, {"ok": True, "count": len(RAW)})
 
         if u.path == "/api/ingest":
             # userscript posílá rovnou pole hotových kotací
