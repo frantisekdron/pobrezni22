@@ -37,6 +37,9 @@ python3 tests/test_engine.py
 
 # 2) Demo: najdi a seřaď příležitosti v ukázkových datech
 python3 scripts/analyze.py examples/seed_events.json -B 100000 --min-margin 0
+#   …nebo větší dataset (25 zápasů) pro test řazení/filtrů:
+python3 scripts/analyze.py examples/seed_events_large.json -B 100000 --min-margin 1
+#   (regenerace: python3 examples/generate_seed.py > examples/seed_events_large.json)
 
 # 3) Rychlý výpočet z konkrétních kurzů
 python3 scripts/arb.py calc 3.00 1.83 -T 1000 --labels "Nad 28.5" "Pod 28.5" --books tipsport bet365

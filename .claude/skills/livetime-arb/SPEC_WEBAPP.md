@@ -167,6 +167,62 @@ Požadavky na kartu:
 
 ---
 
+## 7b. Wireframe — Deník sázek (/bets)
+
+```
+┌─ DENÍK SÁZEK ───────────────────────────────────────────────────────────┐
+│  Souhrn:  Vsazeno 142 600 Kč · Realiz. P/L +4 380 Kč · ROI +3.1%         │
+│           Otevřené: 6 sázek (14 200 Kč)   [ Export CSV ]  [ Filtr ▾ ]    │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │ [graf kumulativního P/L v čase — čára, zelená/červená zóna]        │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+│  P/L po sázkovkách:  Tipsport +1 920 · Betano +1 040 · Fortuna +1 420 ·  │
+│                      bet365 0 (jen kurzy)                                 │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Datum     Zápas / Trh           Typ      Vklad   Kurzy/nohy   Stav  P/L   │
+│ 20.6 21:3 Zverev–Fritz · Esa28.5 SUREBET 1 000  T3.00/b1.83  ✅won +135  │
+│ 20.6 20:1 Slavia–Sparta · 1X2    SUREBET 1 000  3 nohy       ⏳open  —    │
+│ 19.6 18:4 Plzeň–Baník · O2.5     VALUE   1 500  T2.05        ❌lost -1500 │
+│ 19.6 17:0 Nymburk–Brno · O158.5  SUREBET   800  T1.95/b1.95  ✅sett +18  │
+│ 18.6     uvítací bonus Betano     FREEBET 1 000  free2       ✅won +720  │
+│  …                                                                        │
+│  Řádek rozkliknu → detail: všechny nohy, kurzy, sázkovky, očekávaný vs.  │
+│  skutečný zisk (odhalí void/chybu), poznámka, [ změnit stav ▾ ]          │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+- Stav sázky: `open → won / lost / void / settled`. Změna stavu přepočítá P/L.
+- U surebetu ukaž **očekávaný** zisk vs. **skutečný** — když se liší, byl
+  problém (void jedné nohy, jiná pravidla) → upozorni červeně.
+- Filtry: typ, sázkovka, sport, stav, období. Export do CSV.
+
+## 7c. Wireframe — Bankroll & zdraví účtů (/bankroll)
+
+```
+┌─ BANKROLL & ZDRAVÍ ÚČTŮ ──────────────────────────────────────────────────┐
+│  Celkem v oběhu: 100 000 Kč    Volné: 38 400 Kč    Cílový Kelly: ¼        │
+│  Doporučené rozdělení (diverzifikace): ●●●● rovnoměrně, max 30k/sázkovku   │
+├────────────────────────────────────────────────────────────────────────────┤
+│ Sázkovka  Zůstatek  Max vklad  Obrat   P/L     Mug/Ostré  Zdraví          │
+│ Tipsport  24 500 Kč  5 000 Kč   62 000 +1 920   1:6        🟢 OK          │
+│ Betano    21 000 Kč  3 000 Kč↓  31 000 +1 040   1:9        🟠 limit klesá │
+│ Fortuna   16 900 Kč  5 000 Kč   28 000 +1 420   1:5        🟢 OK          │
+│ bet365         —        —          —     —        —         ⚪ jen kurzy   │
+├────────────────────────────────────────────────────────────────────────────┤
+│  ⚠ Betano: max vklad spadl 5 000 → 3 000 Kč = blíží se limitace.          │
+│     Doporučení: zařaď 1–2 mug bety, sniž objem, rotuj na Fortunu.          │
+│  ⚠ Koncentrace OK (žádná sázkovka > 30 % bankrollu).                       │
+│  [ Upravit zůstatky ]   [ Přidat sázkovku ]   [ Onboarding průvodce ▾ ]    │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+- **Max vklad + trend (↑/↓)** je hlavní signál blížící se limitace (viz
+  `ACCOUNT_LONGEVITY.md` §7). Klesající = 🟠/🔴 a konkrétní doporučení.
+- **Mug/Ostré** poměr na sázkovku (kamuflážní vs. arb sázky) — appka navrhne
+  mug bet, když poměr klesne pod cíl.
+- **Koncentrace**: varuj, když je na jedné sázkovce moc kapitálu/obratu.
+- Navrhovaný vklad u příležitosti nesmí překročit zůstatek dané sázkovky.
+- **Onboarding průvodce**: fáze rozjezdu (týden 1–2 bonusy → měsíc 1 lehké
+  arby → měsíc 2+ navyšování) se stropy vkladů podle fáze.
+
 ## 8. Řazení, filtry, rizikové indikátory
 
 **Řazení** (přepínatelné): podle marže/EV (default), podle času startu, podle

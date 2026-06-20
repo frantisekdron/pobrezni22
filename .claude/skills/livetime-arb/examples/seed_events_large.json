@@ -1,0 +1,547 @@
+{
+  "_comment": "Vygenerováno generate_seed.py (seed=42). ZÁMĚRNĚ bohatý demo set pro testování řazení/filtrů UI — v realitě je surebetů řádově míň. Mix surebetů, value betů a pasti.",
+  "events": [
+    {
+      "sport": "basketbal",
+      "event": "Nymburk – Brno",
+      "markets": [
+        {
+          "market": "Celkem bodů – hranice 210.5",
+          "quotes": {
+            "Nad 210.5": {
+              "tipsport": 1.81,
+              "fortuna": 1.6,
+              "betano": 1.59
+            },
+            "Pod 210.5": {
+              "tipsport": 2.32,
+              "fortuna": 2.31,
+              "betano": 2.33
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "hokej",
+      "event": "Sparta – Třinec",
+      "markets": [
+        {
+          "market": "Počet gólů – hranice 3.5",
+          "quotes": {
+            "Nad 3.5": {
+              "betano": 2.3,
+              "fortuna": 2.04
+            },
+            "Pod 3.5": {
+              "betano": 1.75,
+              "fortuna": 1.75
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "basketbal",
+      "event": "Nymburk – Brno",
+      "markets": [
+        {
+          "market": "Vítěz zápasu",
+          "quotes": {
+            "1": {
+              "tipsport": 2.35,
+              "bet365": 2.7,
+              "fortuna": 2.39,
+              "betano": 2.37
+            },
+            "2": {
+              "tipsport": 1.56,
+              "bet365": 1.57,
+              "fortuna": 1.57,
+              "betano": 1.55
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "fotbal",
+      "event": "Inter – Milán",
+      "markets": [
+        {
+          "market": "Počet gólů – hranice 3.5",
+          "quotes": {
+            "Nad 3.5": {
+              "bet365": 4.43,
+              "tipsport": 4.41,
+              "betano": 4.36,
+              "fortuna": 4.36
+            },
+            "Pod 3.5": {
+              "bet365": 1.2,
+              "tipsport": 1.2,
+              "betano": 1.2,
+              "fortuna": 1.19
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "hokej",
+      "event": "Pardubice – Vítkovice",
+      "markets": [
+        {
+          "market": "Výsledek zápasu (1X2)",
+          "quotes": {
+            "1": {
+              "tipsport": 1.8,
+              "fortuna": 1.8
+            },
+            "X": {
+              "tipsport": 5.74,
+              "fortuna": 5.69
+            },
+            "2": {
+              "tipsport": 3.0,
+              "fortuna": 3.04
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "basketbal",
+      "event": "Real – Barcelona",
+      "markets": [
+        {
+          "market": "Celkem bodů – hranice 158.5",
+          "quotes": {
+            "Nad 158.5": {
+              "bet365": 1.73,
+              "tipsport": 1.73,
+              "betano": 2.18
+            },
+            "Pod 158.5": {
+              "bet365": 2.04,
+              "tipsport": 2.05,
+              "betano": 2.03
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "fotbal",
+      "event": "Real Madrid – Barcelona",
+      "markets": [
+        {
+          "market": "Výsledek zápasu (1X2)",
+          "quotes": {
+            "1": {
+              "tipsport": 5.08,
+              "bet365": 5.19,
+              "betano": 5.97,
+              "fortuna": 5.18
+            },
+            "X": {
+              "tipsport": 2.03,
+              "bet365": 2.03,
+              "betano": 2.05,
+              "fortuna": 2.02
+            },
+            "2": {
+              "tipsport": 2.64,
+              "bet365": 2.64,
+              "betano": 2.65,
+              "fortuna": 2.62
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "tenis",
+      "event": "Sinner – Medvedev",
+      "markets": [
+        {
+          "market": "Počet gemů – hranice 22.5",
+          "quotes": {
+            "Nad 22.5": {
+              "fortuna": 1.26,
+              "tipsport": 1.27,
+              "bet365": 1.26,
+              "betano": 1.44
+            },
+            "Pod 22.5": {
+              "fortuna": 3.61,
+              "tipsport": 3.62,
+              "bet365": 3.63,
+              "betano": 3.65
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "tenis",
+      "event": "Swiatek – Sabalenková",
+      "markets": [
+        {
+          "market": "Vítěz zápasu",
+          "quotes": {
+            "1": {
+              "betano": 5.05,
+              "tipsport": 4.47
+            },
+            "2": {
+              "betano": 1.19,
+              "tipsport": 1.18
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "hokej",
+      "event": "Sparta – Třinec",
+      "markets": [
+        {
+          "market": "Výsledek zápasu (1X2)",
+          "quotes": {
+            "1": {
+              "fortuna": 2.81,
+              "betano": 2.8
+            },
+            "X": {
+              "fortuna": 2.43,
+              "betano": 2.43
+            },
+            "2": {
+              "fortuna": 3.33,
+              "betano": 3.35
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "fotbal",
+      "event": "Slavia – Sparta",
+      "markets": [
+        {
+          "market": "Počet gólů – hranice 3.5",
+          "quotes": {
+            "Nad 3.5": {
+              "betano": 1.26,
+              "bet365": 1.44
+            },
+            "Pod 3.5": {
+              "betano": 3.68,
+              "bet365": 3.72
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "fotbal",
+      "event": "Liverpool – Everton",
+      "markets": [
+        {
+          "market": "Výsledek zápasu (1X2)",
+          "quotes": {
+            "1": {
+              "betano": 8.22,
+              "tipsport": 8.23
+            },
+            "X": {
+              "betano": 2.0,
+              "tipsport": 2.0
+            },
+            "2": {
+              "betano": 2.26,
+              "tipsport": 2.25
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "hokej",
+      "event": "Pardubice – Vítkovice",
+      "markets": [
+        {
+          "market": "Počet gólů – hranice 3.5",
+          "quotes": {
+            "Nad 3.5": {
+              "fortuna": 2.61,
+              "tipsport": 2.6,
+              "bet365": 3.05,
+              "betano": 2.6
+            },
+            "Pod 3.5": {
+              "fortuna": 1.45,
+              "tipsport": 1.47,
+              "bet365": 1.46,
+              "betano": 1.47
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "tenis",
+      "event": "Alexander Zverev – Taylor Fritz",
+      "markets": [
+        {
+          "market": "Počet gemů – hranice 22.5",
+          "quotes": {
+            "Nad 22.5": {
+              "betano": 1.38,
+              "fortuna": 1.22
+            },
+            "Pod 22.5": {
+              "betano": 4.19,
+              "fortuna": 4.14
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "fotbal",
+      "event": "PSG – Marseille",
+      "markets": [
+        {
+          "market": "Počet gólů – hranice 3.5",
+          "quotes": {
+            "Nad 3.5": {
+              "bet365": 2.91,
+              "betano": 2.95
+            },
+            "Pod 3.5": {
+              "bet365": 1.38,
+              "betano": 1.39
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "fotbal",
+      "event": "Plzeň – Baník",
+      "markets": [
+        {
+          "market": "Výsledek zápasu (1X2)",
+          "quotes": {
+            "1": {
+              "tipsport": 2.28,
+              "fortuna": 2.62,
+              "betano": 2.3
+            },
+            "X": {
+              "tipsport": 2.4,
+              "fortuna": 2.42,
+              "betano": 2.4
+            },
+            "2": {
+              "tipsport": 4.67,
+              "fortuna": 4.76,
+              "betano": 4.71
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "fotbal",
+      "event": "Bayern – Dortmund",
+      "markets": [
+        {
+          "market": "Počet gólů – hranice 2.5",
+          "quotes": {
+            "Nad 2.5": {
+              "bet365": 2.04,
+              "betano": 1.77
+            },
+            "Pod 2.5": {
+              "bet365": 2.03,
+              "betano": 2.03
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "hokej",
+      "event": "Boston – Toronto",
+      "markets": [
+        {
+          "market": "Počet gólů – hranice 2.5",
+          "quotes": {
+            "Nad 2.5": {
+              "betano": 4.05,
+              "bet365": 4.01,
+              "tipsport": 4.0,
+              "fortuna": 4.02
+            },
+            "Pod 2.5": {
+              "betano": 1.24,
+              "bet365": 1.23,
+              "tipsport": 1.23,
+              "fortuna": 1.24
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "tenis",
+      "event": "Alexander Zverev – Taylor Fritz",
+      "markets": [
+        {
+          "market": "Esa v zápase – hranice 28.5",
+          "quotes": {
+            "Nad 28.5": {
+              "betano": 1.72,
+              "tipsport": 1.98
+            },
+            "Pod 28.5": {
+              "betano": 2.1,
+              "tipsport": 2.08
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "tenis",
+      "event": "Alcaraz – Djokovič",
+      "markets": [
+        {
+          "market": "Vítěz zápasu",
+          "quotes": {
+            "1": {
+              "fortuna": 1.25,
+              "tipsport": 1.28
+            },
+            "2": {
+              "fortuna": 3.65,
+              "tipsport": 3.69
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "tenis",
+      "event": "Sinner – Medvedev",
+      "markets": [
+        {
+          "market": "Vítěz zápasu",
+          "quotes": {
+            "1": {
+              "tipsport": 1.61,
+              "betano": 1.6,
+              "bet365": 2.02
+            },
+            "2": {
+              "tipsport": 2.25,
+              "betano": 2.23,
+              "bet365": 2.28
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "basketbal",
+      "event": "Real – Barcelona",
+      "markets": [
+        {
+          "market": "Vítěz zápasu — POZOR: extrémní kurz = pravděpodobně chyba",
+          "quotes": {
+            "1": {
+              "tipsport": 2.56,
+              "betano": 2.59,
+              "fortuna": 3.84
+            },
+            "2": {
+              "tipsport": 1.49,
+              "betano": 1.49,
+              "fortuna": 1.49
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "tenis",
+      "event": "Alcaraz – Djokovič",
+      "markets": [
+        {
+          "market": "Esa v zápase – hranice 22.5",
+          "quotes": {
+            "Nad 22.5": {
+              "bet365": 1.86,
+              "fortuna": 2.15,
+              "tipsport": 1.85,
+              "betano": 1.86
+            },
+            "Pod 22.5": {
+              "bet365": 1.89,
+              "fortuna": 1.91,
+              "tipsport": 1.89,
+              "betano": 1.91
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "tenis",
+      "event": "Swiatek – Sabalenková",
+      "markets": [
+        {
+          "market": "Počet gemů – hranice 22.5",
+          "quotes": {
+            "Nad 22.5": {
+              "bet365": 2.51,
+              "tipsport": 2.89,
+              "betano": 2.48
+            },
+            "Pod 22.5": {
+              "bet365": 1.51,
+              "tipsport": 1.5,
+              "betano": 1.51
+            }
+          }
+        }
+      ]
+    },
+    {
+      "sport": "tenis",
+      "event": "Swiatek – Sabalenková",
+      "markets": [
+        {
+          "market": "Esa v zápase – hranice 22.5",
+          "quotes": {
+            "Nad 22.5": {
+              "bet365": 1.8,
+              "tipsport": 1.81,
+              "fortuna": 1.82,
+              "betano": 1.83
+            },
+            "Pod 22.5": {
+              "bet365": 1.92,
+              "tipsport": 1.94,
+              "fortuna": 1.95,
+              "betano": 1.93
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
