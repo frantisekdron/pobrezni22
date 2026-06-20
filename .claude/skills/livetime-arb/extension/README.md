@@ -27,8 +27,15 @@ stránek a pošle do dashboardu, který je sám naparsuje na kurzy.
 4. V dashboardu **http://localhost:8000** → Příležitosti → Zdroj dat
    **„Moje DB"** → Najít.
 
-> Panel má i tlačítko **„Sejmi DOM (záloha)"** pro případ, že by API odchyt
-> u nějaké stránky nestačil.
+### Aby ses nemusel proklikávat ručně
+
+- **Rozklikávání trhů je automatické** — rozšíření samo klika na „Zobrazit vše /
+  Více trhů" a rozbaluje sbalené trhy na otevřené stránce (vypneš zaškrtátkem
+  „rozklikávat" v panelu).
+- **„Projet všechny zápasy"** — na přehledu soutěže klikni tohle tlačítko;
+  rozšíření postupně otevře každý zápas v tabu na pozadí, nechá zachytit jeho
+  trhy a tab zase zavře. Takže projedeš celou nabídku bez klikání.
+- Tlačítko **„Sejmi DOM"** je záloha, když by API odchyt nestačil.
 
 ## Kontrola
 

@@ -3,6 +3,7 @@
   "name": "Livetime Arb — sběr kurzů",
   "version": "0.1",
   "description": "Sbírá kurzy ze sázkovek (odchyt jejich API) a posílá do lokálního dashboardu na http://localhost:8000.",
+  "permissions": ["tabs"],
   "host_permissions": [
     "http://localhost/*",
     "https://*.tipsport.cz/*",

@@ -64,6 +64,39 @@
     return out;
   }
 
+  // ── auto-rozkliknutí všech trhů na stránce ─────────────────────────
+  const EXPAND_TXT = /zobrazit v[sš]e|v[ií]ce trh|v[sš]echny trhy|zobrazit dal|více mo[zž]nost|show all|all markets|rozbalit/i;
+  function expandAll() {
+    let n = 0;
+    const els = document.querySelectorAll('button,a,[role="button"],[aria-expanded="false"]');
+    for (const el of els) {
+      if (el.dataset && el.dataset.laExpanded) continue;
+      const t = (el.textContent || "").trim();
+      const collapsed = el.getAttribute && el.getAttribute("aria-expanded") === "false";
+      if (collapsed || (t.length < 40 && EXPAND_TXT.test(t))) {
+        try { el.click(); if (el.dataset) el.dataset.laExpanded = "1"; n++; } catch (e) {}
+      }
+    }
+    return n;
+  }
+
+  // ── odkazy na detaily zápasů (pro „projet vše") ────────────────────
+  const DETAIL = {
+    tipsport: /tipsport\.cz\/(kurzy|live)\/.*?[a-z]-\d{5,}/i,
+    fortuna: /ifortuna\.cz\/sazeni\/[^/]+\/[^/]+\/[^/]+\/[^/?#]+/i,
+    betano: /betano\.cz\/(live|sport)\/[^/]+\/\d{6,}/i,
+    bet365: /bet365\.com\/.+#/i,
+  };
+  function detailLinks() {
+    const rx = DETAIL[BOOK]; if (!rx) return [];
+    const set = new Set();
+    document.querySelectorAll("a[href]").forEach(a => {
+      const h = (a.href || "").split("#")[0];
+      if (rx.test(a.href) && h !== location.href.split("#")[0]) set.add(h);
+    });
+    return [...set].slice(0, 40);
+  }
+
   // ── plovoucí panel ─────────────────────────────────────────────────
   function panel() {
     if (document.querySelector("#la_box")) return;
@@ -71,9 +104,11 @@
     box.id = "la_box";
     box.style.cssText = "position:fixed;z-index:2147483647;right:12px;bottom:12px;background:#0b0f17;color:#e5e9f0;border:1px solid #1d4ed8;border-radius:10px;padding:10px;font:12px system-ui;width:250px;box-shadow:0 6px 24px #000a";
     box.innerHTML = '<b>🟢 Livetime Arb · ' + BOOK + '</b>'
-      + '<div style="margin:6px 0;color:#94a3b8">Sbírám API stránky automaticky. Otevři přehled / zápas a roluj.</div>'
-      + '<div style="margin:6px 0">Sport: <input id="la_sport" placeholder="fotbal" style="width:80px;background:#0e141f;color:#fff;border:1px solid #29384d;border-radius:4px"></div>'
-      + '<button id="la_grab" style="background:#334155;color:#fff;border:0;border-radius:6px;padding:5px 8px;cursor:pointer">Sejmi DOM (záloha)</button>'
+      + '<div style="margin:6px 0;color:#94a3b8">Sbírám API stránky automaticky a sám rozklikávám trhy.</div>'
+      + '<div style="margin:6px 0">Sport: <input id="la_sport" placeholder="fotbal" style="width:80px;background:#0e141f;color:#fff;border:1px solid #29384d;border-radius:4px">'
+      + ' <label style="color:#94a3b8"><input type="checkbox" id="la_exp" checked> rozklikávat</label></div>'
+      + '<button id="la_crawl" style="background:#1d4ed8;color:#fff;border:0;border-radius:6px;padding:5px 8px;cursor:pointer">Projet všechny zápasy</button>'
+      + ' <button id="la_grab" style="background:#334155;color:#fff;border:0;border-radius:6px;padding:5px 8px;cursor:pointer">Sejmi DOM</button>'
       + '<div id="la_status" style="margin-top:6px;color:#94a3b8">📡 čekám na data stránky…</div>';
     document.body.appendChild(box);
     statusEl = box.querySelector("#la_status");
@@ -85,6 +120,20 @@
       chrome.runtime.sendMessage({ type: "quotes", quotes: q },
         () => setStatus("DOM: odesláno " + q.length + " kurzů"));
     };
+    box.querySelector("#la_crawl").onclick = () => {
+      const urls = detailLinks();
+      if (!urls.length) { setStatus("Na téhle stránce nevidím odkazy na zápasy — otevři přehled soutěže."); return; }
+      setStatus("Projíždím " + urls.length + " zápasů v tabech na pozadí…");
+      chrome.runtime.sendMessage({ type: "crawl", urls });
+    };
+
+    // auto-rozklikávání trhů co pár sekund
+    setInterval(() => {
+      if (box.querySelector("#la_exp") && box.querySelector("#la_exp").checked) {
+        const n = expandAll();
+        if (n) setStatus(`📡 zachyceno ${captured} · ${sent} kurzů · rozkliknuto ${n} trhů`);
+      }
+    }, 2500);
     if (captured) setStatus(`📡 zachyceno ${captured} · ${sent} kurzů`);
   }
   if (document.body) panel(); else window.addEventListener("DOMContentLoaded", panel);
