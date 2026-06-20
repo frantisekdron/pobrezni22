@@ -65,6 +65,13 @@ maximální vklad (klidně na 20 Kč), zpomalí výplaty, nebo účet zavřou. T
 zmizí → zůstaneš s jednostrannou sázkou. U live je to časté. Proto: nejdřív
 ta hůř dostupná/pomalejší noha, pak rychlá.
 
+> **➜ Preferuj PREMATCH (před výkopem), ne live.** Doporučená výchozí strategie:
+> prematch kurzy jsou stabilní (drží minuty až hodiny), takže obě nohy stihneš
+> v klidu a leg risk je minimální. Navíc se prematch líp sbírá (žádné
+> websockety/anti-bot jako u live) a je míň pravděpodobné, že jde o palpable
+> error. Live ber jen jako bonus, když máš jistý a rychlý postup. Marže prematch
+> arbů bývají menší (0,5–2 %), ale o to bezpečnější — a to je přesně cíl.
+
 **③ Palpable error / void.** Sázkovka stornuje „chybný" kurz a vrátí jen svůj
 vklad. Druhá noha jinde platí → ztráta. Riziko roste s marží (proto pozor na
 20 %).

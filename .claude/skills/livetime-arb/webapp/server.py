@@ -95,8 +95,15 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", ctype + "; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        # CORS — aby userscript běžící na stránce sázkovky mohl posílat kurzy
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
         self.wfile.write(body)
+
+    def do_OPTIONS(self):                 # CORS preflight
+        self._send(204, b"")
 
     def _body(self) -> dict:
         n = int(self.headers.get("Content-Length", 0) or 0)
@@ -152,11 +159,29 @@ class Handler(BaseHTTPRequestHandler):
         b = self._body()
 
         if u.path == "/api/ingest":
+            # userscript posílá rovnou pole hotových kotací
+            if isinstance(b.get("quotes"), list):
+                qs = [x for x in b["quotes"] if isinstance(x, dict) and x.get("odds")]
+                n = db.insert_quotes(qs) if qs else 0
+                return self._send(200, {"parsed": len(qs), "saved": n,
+                                        "preview": qs[:80]})
             text = b.get("text", b.get("_raw", ""))
-            quotes = ingest.parse_block(text)
+            mode = b.get("mode", "block")
+            if mode == "free":
+                ln = b.get("line")
+                try:
+                    ln = float(str(ln).replace(",", ".")) if ln not in (None, "", "None") else None
+                except ValueError:
+                    ln = None
+                ctx = {"book": b.get("book") or "?", "sport": b.get("sport") or "?",
+                       "home": b.get("home") or "?", "away": b.get("away") or "?",
+                       "market": b.get("market") or "?", "line": ln}
+                quotes = ingest.parse_free(text, ctx)
+            else:
+                quotes = ingest.parse_block(text)
             n = db.insert_quotes(quotes) if quotes else 0
             return self._send(200, {"parsed": len(quotes), "saved": n,
-                                    "preview": quotes[:50]})
+                                    "preview": quotes[:80]})
 
         if u.path == "/api/bets":
             return self._send(200, {"id": db.log_bet(b)})

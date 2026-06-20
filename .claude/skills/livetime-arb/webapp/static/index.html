@@ -25,6 +25,7 @@
       <button class="tab px-3 py-1.5 rounded" data-t="bets">Deník</button>
       <button class="tab px-3 py-1.5 rounded" data-t="bank">Bankroll</button>
       <button class="tab px-3 py-1.5 rounded" data-t="bonus">Bonusy</button>
+      <button class="tab px-3 py-1.5 rounded" data-t="plan">📅 Plán</button>
     </nav>
   </header>
 
@@ -51,18 +52,35 @@
   <!-- IMPORT -->
   <section id="import" class="hidden">
     <div class="card rounded-lg p-4">
-      <p class="text-sm text-slate-300 mb-2">Zkopíruj kurzy ze stránky sázkovky a vlož v blokovém formátu:</p>
+      <div class="flex gap-2 mb-3 text-sm">
+        <button id="modeBlock" class="px-3 py-1 rounded bg-blue-700">Blokový formát</button>
+        <button id="modeFree" class="px-3 py-1 rounded bg-slate-700">Volný text (kopíruj z živé stránky)</button>
+      </div>
+
+      <div id="freeCtx" class="hidden grid grid-cols-2 md:grid-cols-3 gap-2 text-sm mb-2">
+        <label>Sázkovka<br><input id="ctx_book" placeholder="tipsport" class="rounded px-2 py-1 w-full mt-1"></label>
+        <label>Sport<br><input id="ctx_sport" placeholder="tenis" class="rounded px-2 py-1 w-full mt-1"></label>
+        <label>Domácí<br><input id="ctx_home" placeholder="Zverev" class="rounded px-2 py-1 w-full mt-1"></label>
+        <label>Hosté<br><input id="ctx_away" placeholder="Fritz" class="rounded px-2 py-1 w-full mt-1"></label>
+        <label>Trh<br><input id="ctx_market" placeholder="Esa v zápase" class="rounded px-2 py-1 w-full mt-1"></label>
+        <label>Hranice (line)<br><input id="ctx_line" placeholder="28.5" class="rounded px-2 py-1 w-full mt-1"></label>
+      </div>
+
+      <p id="hintBlock" class="text-sm text-slate-300 mb-2">Zkopíruj kurzy ze stránky sázkovky a vlož v blokovém formátu (@ direktivy + řádky „výsledek | kurz"):</p>
+      <p id="hintFree" class="hidden text-sm text-slate-300 mb-2">Na živé stránce sázkovky <b>označ myší</b> oblast s kurzy, zkopíruj (Cmd+C) a vlož sem. Vyplň kontext nahoře (sázkovka, zápas, trh). Vytáhne se „popisek → kurz" z každého řádku.</p>
+
       <textarea id="paste" rows="12" class="w-full rounded p-2 font-mono text-sm" placeholder="@book tipsport
 @sport tenis
 @event Alexander Zverev | Taylor Fritz
 @market Esa v zápase | 28.5
 Nad | 3.00
 Pod | 1.78"></textarea>
-      <div class="flex gap-2 mt-2">
-        <button onclick="doIngest()" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded font-semibold">Naparsovat & uložit do DB</button>
+      <div class="flex gap-2 mt-2 flex-wrap">
+        <button id="ingBtn" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded font-semibold">Naparsovat & uložit do DB</button>
         <span id="ingmsg" class="text-sm text-slate-400 self-center"></span>
       </div>
-      <div id="preview" class="mt-3 text-sm"></div>
+      <p class="text-xs text-slate-500 mt-2">💡 Reálná data ber z živé stránky ve <b>svém</b> prohlížeči (server sázkovek boty z datacentra blokuje – 403). Tip: bookmarklet „Kurzy → schránka" je v <code>webapp/odds-grabber.md</code>.</p>
+      <div id="preview" class="mt-3 text-sm overflow-auto"></div>
     </div>
   </section>
 
@@ -96,13 +114,21 @@ Pod | 1.78"></textarea>
     </div>
   </section>
 
+  <!-- PLÁN -->
+  <section id="plan" class="hidden">
+    <div class="mb-3 text-sm text-slate-300">Denní strategie diverzifikace, která plyne s reálným časem. Otevři každý den a projdi „DNES".</div>
+    <div id="planroot"></div>
+  </section>
+
   <footer class="text-xs text-slate-500 mt-8 border-t border-slate-800 pt-3">
+    ✅ <b>Doporučeno: prematch</b> (před výkopem) — stabilní kurzy, minimální leg risk, snadnější sběr. Live jen jako bonus.<br>
     ⚠ 20 %+ „jasných" surebetů reálně skoro neexistuje (chyba sázkovky → storno).
     Hlavní riziko = limitace účtů. Jen licencované sázkovky, vlastní jméno, 18+.
     Daně v ČR konzultuj s poradcem. Tohle není garance výplaty.
   </footer>
 </div>
 
+<script src="/static/strategy.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const fmt = n => Math.round(n).toLocaleString('cs-CZ');
@@ -110,11 +136,18 @@ const fmt = n => Math.round(n).toLocaleString('cs-CZ');
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   b.classList.add('active');
-  ['dash','import','bets','bank','bonus'].forEach(id=>$('#'+id).classList.add('hidden'));
+  ['dash','import','bets','bank','bonus','plan'].forEach(id=>$('#'+id).classList.add('hidden'));
   $('#'+b.dataset.t).classList.remove('hidden');
   if(b.dataset.t==='bets') loadBets();
   if(b.dataset.t==='bank') loadBank();
+  if(b.dataset.t==='plan') loadPlan();
 });
+
+async function loadPlan(){
+  let rows=[];
+  try{ rows=(await (await fetch('/api/bankroll')).json()).bankroll||[]; }catch(e){}
+  window.PlanUI.render($('#planroot'), {bankroll:+$('#bankroll').value||100000, bankrollRows:rows});
+}
 
 async function loadOpps(){
   const p = new URLSearchParams({source:$('#source').value, total:$('#total').value,
@@ -173,17 +206,34 @@ async function betIt(a){
   alert('Uloženo do deníku jako otevřená sázka.');
 }
 
+let ingMode = 'block';
+function setMode(m){
+  ingMode = m;
+  $('#modeBlock').className = 'px-3 py-1 rounded '+(m==='block'?'bg-blue-700':'bg-slate-700');
+  $('#modeFree').className = 'px-3 py-1 rounded '+(m==='free'?'bg-blue-700':'bg-slate-700');
+  $('#freeCtx').classList.toggle('hidden', m!=='free');
+  $('#hintBlock').classList.toggle('hidden', m!=='block');
+  $('#hintFree').classList.toggle('hidden', m!=='free');
+}
+$('#modeBlock').onclick = ()=>setMode('block');
+$('#modeFree').onclick  = ()=>setMode('free');
+
 async function doIngest(){
+  const body = ingMode==='free'
+    ? {mode:'free', text:$('#paste').value, book:$('#ctx_book').value, sport:$('#ctx_sport').value,
+       home:$('#ctx_home').value, away:$('#ctx_away').value, market:$('#ctx_market').value, line:$('#ctx_line').value}
+    : {mode:'block', text:$('#paste').value};
   const r = await (await fetch('/api/ingest',{method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({text:$('#paste').value})})).json();
-  $('#ingmsg').textContent = `Naparsováno ${r.parsed}, uloženo ${r.saved} kotací.`;
+    headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)})).json();
+  $('#ingmsg').textContent = `Naparsováno ${r.parsed}, uloženo ${r.saved} kotací. ` +
+    (r.saved ? 'Přepni Zdroj dat na „Moje DB" v Příležitostech.' : '');
   $('#preview').innerHTML = r.preview.length ? '<table class="w-full text-xs"><thead class="text-slate-400">'+
     '<tr><th class="text-left">Sázkovka</th><th class="text-left">Zápas</th><th class="text-left">Trh</th>'+
     '<th class="text-left">Výsledek</th><th class="text-right">Kurz</th></tr></thead><tbody>'+
     r.preview.map(q=>`<tr><td>${q.bookmaker}</td><td>${q.home} – ${q.away}</td><td>${q.market}${q.line?' '+q.line:''}</td><td>${q.outcome}</td><td class="text-right">${q.odds}</td></tr>`).join('')+
-    '</tbody></table>' : '';
+    '</tbody></table>' : '<p class="text-amber-300">Nic se nenaparsovalo — zkontroluj formát / kontext.</p>';
 }
+$('#ingBtn').onclick = doIngest;
 
 async function loadBets(){
   const d = await (await fetch('/api/bets')).json();
