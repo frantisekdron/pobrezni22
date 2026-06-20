@@ -39,73 +39,77 @@
   const ODDS_RE = /^\d{1,3}[.,]\d{1,2}$/;
   const clean = s => (s || "").replace(/\s+/g, " ").trim();
 
-  // ── popisek výsledku poblíž kurzu ────────────────────────────────
-  function labelNear(el) {
-    const aria = el.getAttribute("aria-label") || el.getAttribute("title");
-    if (aria && !ODDS_RE.test(clean(aria))) return clean(aria);
-    // projdi nahoru max 4 úrovně a vezmi text bez čísla kurzu
-    let n = el, hops = 0;
-    while (n && hops++ < 4) {
-      const t = clean(n.getAttribute && (n.getAttribute("aria-label") || ""));
-      if (t && !ODDS_RE.test(t)) return t;
-      n = n.parentElement;
-    }
-    // sourozenec vlevo
-    let p = el.previousElementSibling;
-    while (p) { const t = clean(p.textContent); if (t && !ODDS_RE.test(t)) return t.slice(0, 40); p = p.previousElementSibling; }
-    return "?";
-  }
+  // nadpis trhu = krátký český text typu „… v zápasu", „Výsledek zápasu" …
+  const MARKET_RE = /(v z[aá]pasu|v[yý]sledek z[aá]pasu|po[cč]et (g[oó]l[uů]|roh[uů]|karet|tref|gem|set)|kdo (d[aá]|bude)|v[ií]ce roh[uů]|padne g[oó]l|ka[zž]d[yý] t[yý]m|vst[rř]el|hlavou|dvojtip|handicap|polo[cč]as|p[rř]esn[yý] v[yý]sledek|oba t[yý]my|s[aá]zka bez|celkem g[oó]l|v[ií]t[eě]z|asijsk|1\. ?pol|2\. ?pol|\bBTTS\b)/i;
+  // popisek výsledku, který se NEpočítá jako nadpis
+  const OUTCOME_RE = /^(ano|ne|v[ií]ce ne[zž]|m[eé]n[eě] ne[zž]|nad|pod|remíza|neprohra|nebude remíza|\d+\. g[oó]l)/i;
 
-  // ── nadpis trhu nad kurzem ───────────────────────────────────────
-  function marketNear(el) {
-    let n = el;
-    for (let i = 0; i < 8 && n; i++, n = n.parentElement) {
-      const h = n.querySelector && n.querySelector('h1,h2,h3,h4,[role="heading"],[class*="market" i],[class*="trh" i]');
-      if (h) { const t = clean(h.textContent); if (t && !ODDS_RE.test(t)) return t.slice(0, 60); }
-    }
-    return "?";
-  }
-
-  // ── název zápasu ─────────────────────────────────────────────────
   function eventNames() {
-    const sel = document.querySelector('[class*="participant" i],[class*="event-name" i],[class*="match" i] h1,h1');
+    // Tipsport: z URL /live/zapas/fotbal-nemecko-pobrezi-slonoviny/ID
+    const m = location.pathname.match(/zapas\/[a-z]+-([a-z0-9-]+?)-([a-z0-9-]+)\/\d+/i);
+    if (m) {
+      const deslug = s => s.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      return { home: deslug(m[1]), away: deslug(m[2]) };
+    }
+    const sel = document.querySelector('[class*="participant" i],[class*="event-name" i],[class*="header" i] h1,h1');
     let title = sel ? clean(sel.textContent) : clean(document.title);
-    let parts = title.split(/\s+(?:vs?\.?|–|—|-|:)\s+/i).map(clean).filter(Boolean);
-    if (parts.length >= 2) return { home: parts[0], away: parts[1] };
-    return { home: title.slice(0, 40) || "?", away: "?" };
+    title = title.split("|")[0];  // Fortuna: "Domácí - Hosté | Fortuna"
+    let parts = title.split(/\s+(?:vs?\.?|–|—|·|•|-|:)\s+/i).map(clean).filter(Boolean);
+    return parts.length >= 2 ? { home: parts[0], away: parts[1] } : { home: title.slice(0, 40) || "?", away: "?" };
   }
 
-  // ── adaptéry (přesné selektory per sázkovka — k doplnění) ─────────
-  const ADAPTERS = {
-    // tipsport: function(){ return [ {market, outcome, odds, line} ... ]; },
-    // fortuna:  function(){ ... },
-    // betano:   function(){ ... },
-    // bet365:   function(){ ... },
-  };
+  // popisek výsledku z buňky vlevo od kurzu
+  function outcomeLabel(el) {
+    let p = el.previousElementSibling;
+    while (p) { const t = clean(p.textContent); if (t && !ODDS_RE.test(t) && /[a-záčďéěíňóřšťúůýž]/i.test(t) && t.length <= 40) return t; p = p.previousElementSibling; }
+    let n = el.parentElement;
+    for (let i = 0; i < 3 && n; i++, n = n.parentElement) {
+      const t = clean(n.textContent.replace(clean(el.textContent), ""));
+      if (/[a-záčďéěíňóřšťúůýž]/i.test(t) && t.length <= 40) return t;
+    }
+    return "?";
+  }
 
-  function genericScan() {
+  function lineFrom(label) {
+    if (!/(v[ií]ce|m[eé]n[eě]|nad|pod|over|under)/i.test(label)) return null;
+    const m = label.match(/(\d+(?:[.,]\d+)?)/);
+    return m ? parseFloat(m[1].replace(",", ".")) : null;
+  }
+
+  // hlavní scanner: projde DOM v pořadí, drží aktuální nadpis trhu,
+  // a ke každému kurzu přiřadí trh + popisek výsledku. Funguje na Tipsport
+  // layoutu (bloky trhů s českým nadpisem + řádky popisek→kurz).
+  function scanSmart() {
     const { home, away } = eventNames();
     const sport = localStorage.getItem("la_sport") || "?";
     const out = [], seen = new Set();
-    document.querySelectorAll("button,span,a,div,td").forEach(el => {
-      if (el.children.length) return;                 // jen listové prvky
-      const txt = clean(el.textContent);
-      if (!ODDS_RE.test(txt)) return;
-      const odds = parseFloat(txt.replace(",", "."));
-      if (!(odds > 1.01 && odds < 1000)) return;
-      const label = labelNear(el), market = marketNear(el);
-      const key = market + "|" + label + "|" + odds;
-      if (seen.has(key)) return; seen.add(key);
-      let line = null;
-      const lm = label.match(/(\d+(?:[.,]\d+)?)/);
-      if (lm && /(nad|pod|over|under|vice|mene|\+|\-)/i.test(label)) line = parseFloat(lm[1].replace(",", "."));
-      out.push({ bookmaker: BOOK, sport, home, away, market, line, outcome: label, odds });
-    });
+    let market = "?";
+    const all = document.body ? document.body.getElementsByTagName("*") : [];
+    for (let i = 0; i < all.length; i++) {
+      const el = all[i];
+      const t = clean(el.textContent);
+      if (el.children.length === 0 && ODDS_RE.test(t)) {
+        const odds = parseFloat(t.replace(",", "."));
+        if (odds > 1.01 && odds < 1000) {
+          const label = outcomeLabel(el);
+          if (label && label !== "?") {
+            const key = market + "|" + label + "|" + odds;
+            if (!seen.has(key)) {
+              seen.add(key);
+              out.push({ bookmaker: BOOK, sport, home, away, market, line: lineFrom(label), outcome: label, odds });
+            }
+          }
+        }
+      } else if (t.length <= 60 && MARKET_RE.test(t) && !OUTCOME_RE.test(t) && !ODDS_RE.test(t)) {
+        // nadpis trhu (list i kontejner s krátkým textem)
+        market = t.replace(/[📌▲▼^]+\s*$/, "").trim().slice(0, 60);
+      }
+    }
     return out;
   }
 
   function scrape() {
-    try { return ADAPTERS[BOOK] ? ADAPTERS[BOOK]() : genericScan(); }
+    try { return scanSmart(); }
     catch (e) { console.error("[livetime-arb] scrape error", e); return []; }
   }
 

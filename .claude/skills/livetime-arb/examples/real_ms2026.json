@@ -1,0 +1,60 @@
+{
+  "_comment": "REÁLNÁ data přepsaná ze screenshotů 20.6.2026 (~23:08) — Tipsport, Fortuna, Betano. 1X2 na zápasy MS 2026. Ukázka výpočtu z reálných kurzů. (Kurzy se mění, je to snímek v čase.)",
+  "events": [
+    {
+      "sport": "fotbal",
+      "event": "Tunisko – Japonsko",
+      "markets": [
+        { "market": "Výsledek zápasu (1X2)", "quotes": {
+          "1": { "tipsport": 7.62, "fortuna": 7.60, "betano": 6.80 },
+          "X": { "tipsport": 4.50, "fortuna": 4.40, "betano": 4.20 },
+          "2": { "tipsport": 1.47, "fortuna": 1.47, "betano": 1.53 }
+        } }
+      ]
+    },
+    {
+      "sport": "fotbal",
+      "event": "Španělsko – Saúdská Arábie",
+      "markets": [
+        { "market": "Výsledek zápasu (1X2)", "quotes": {
+          "1": { "tipsport": 1.10, "fortuna": 1.11, "betano": 1.13 },
+          "X": { "tipsport": 10.50, "fortuna": 10.00, "betano": 9.00 },
+          "2": { "tipsport": 29.40, "fortuna": 28.00, "betano": 24.00 }
+        } }
+      ]
+    },
+    {
+      "sport": "fotbal",
+      "event": "Ekvádor – Curacao",
+      "markets": [
+        { "market": "Výsledek zápasu (1X2)", "quotes": {
+          "1": { "tipsport": 1.17, "fortuna": 1.16, "betano": 1.19 },
+          "X": { "tipsport": 7.67, "fortuna": 7.60, "betano": 7.00 },
+          "2": { "tipsport": 17.20, "fortuna": 18.00, "betano": 18.50 }
+        } }
+      ]
+    },
+    {
+      "sport": "fotbal",
+      "event": "Belgie – Írán",
+      "markets": [
+        { "market": "Výsledek zápasu (1X2)", "quotes": {
+          "1": { "tipsport": 1.44, "fortuna": 1.44, "betano": 1.47 },
+          "X": { "tipsport": 4.77, "fortuna": 4.60, "betano": 4.55 },
+          "2": { "tipsport": 7.85, "fortuna": 7.80, "betano": 7.60 }
+        } }
+      ]
+    },
+    {
+      "sport": "fotbal",
+      "event": "Uruguay – Kapverdy",
+      "markets": [
+        { "market": "Výsledek zápasu (1X2)", "quotes": {
+          "1": { "fortuna": 1.47, "betano": 1.53 },
+          "X": { "fortuna": 4.00, "betano": 3.90 },
+          "2": { "fortuna": 8.20, "betano": 7.90 }
+        } }
+      ]
+    }
+  ]
+}
