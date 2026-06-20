@@ -44,6 +44,13 @@ stejná pravidla při skreči/odstoupení. To je největší riziko — vždy ov
 > 20 %+ „jasných" surebetů poctivě skoro neexistuje (bývá to chyba sázkovky,
 > kterou stornují). Stabilní výdělek = objem malých marží (1–3 %) + bonusy;
 > hlavní riziko není matematika, ale **limitace účtů**.
+>
+> **Legální plán, aby tě sázkovky nelimitovaly: viz `ACCOUNT_LONGEVITY.md`**
+> (rekreační profil, mug betting, diverzifikace, round stakes — vše legálně,
+> bez multiúčtů a falešných identit).
+>
+> **Zadání pro stavbu webového dashboardu: viz `SPEC_WEBAPP.md`** (paste-ready
+> brief pro Claude Code).
 
 ## Hlavní postup (bez API, ze zkopírovaných stránek)
 
