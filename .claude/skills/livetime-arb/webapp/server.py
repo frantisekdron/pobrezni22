@@ -144,6 +144,58 @@ def diagnostics() -> dict:
     }
 
 
+def markets_html(show_all: bool = False) -> str:
+    """Čitelná stránka: všechny trhy v DB + kurzy per sázkovka (ať je vidět,
+    co se s čím porovnává a kde je nesmysl)."""
+    events = load_events("db")
+    n_markets = n_multi = 0
+    body = []
+    for ev in sorted(events.get("events", []), key=lambda e: e["event"]):
+        rows = []
+        mkts = []
+        for m in ev["markets"]:
+            books = sorted({b for codes in m["quotes"].values() for b in codes})
+            mkts.append((len(books), m, books))
+        mkts.sort(key=lambda x: -x[0])
+        for nbooks, m, books in mkts:
+            n_markets += 1
+            if nbooks >= 2:
+                n_multi += 1
+            elif not show_all:
+                continue
+            codes = list(m["quotes"].keys())
+            best = {c: max(bk.values()) for c, bk in m["quotes"].items() if bk}
+            S = sum(1 / o for o in best.values()) if len(best) == len(codes) else None
+            tag = ""
+            if S is not None:
+                if S < 1:
+                    tag = f"<b style='color:#22c55e'>🟢 ARB +{(1/S-1)*100:.2f}%</b>"
+                else:
+                    tag = f"<span style='color:#94a3b8'>Σ {S*100:.1f}% (přebití {(S-1)*100:.1f}%)</span>"
+            cells = []
+            for c in codes:
+                bs = " · ".join(f"{b}:{o:.2f}" for b, o in sorted(m["quotes"][c].items()))
+                cells.append(f"<td><b>{c}</b><br><span style='color:#93c5fd'>{bs}</span></td>")
+            border = "#22c55e" if (S is not None and S < 1) else ("#1d4ed8" if nbooks >= 2 else "#334155")
+            rows.append(
+                f"<tr style='border-left:3px solid {border}'><td style='min-width:230px'>{m['market']} "
+                f"<span style='color:#64748b'>[{nbooks} sáz.]</span><br>{tag}</td>{''.join(cells)}</tr>")
+        if rows:
+            body.append(f"<h3 style='margin:14px 0 4px'>{ev['event']} "
+                        f"<span style='color:#64748b;font-weight:400'>· {ev['sport']}</span></h3>"
+                        f"<table>{''.join(rows)}</table>")
+    head = (f"<div style='margin-bottom:10px'><b>{len(events.get('events',[]))} zápasů</b> · "
+            f"{n_markets} trhů · <b style='color:#22c55e'>{n_multi} trhů od 2+ sázkovek</b> · "
+            f"<a href='/markets?all={'0' if show_all else '1'}' style='color:#60a5fa'>"
+            f"{'zobrazit jen 2+ sázkovek' if show_all else 'zobrazit i jednosázkovkové'}</a></div>")
+    return ("<!doctype html><meta charset=utf-8><title>Trhy</title>"
+            "<style>body{background:#0b0f17;color:#e5e9f0;font:13px system-ui;padding:16px}"
+            "table{border-collapse:collapse;width:100%;margin-bottom:8px}"
+            "td{padding:4px 8px;border:1px solid #1f2a3a;vertical-align:top}"
+            "h3{color:#e5e9f0}a{text-decoration:none}</style>"
+            + head + ("".join(body) or "<p>Žádné trhy. Nasbírej kurzy přes rozšíření.</p>"))
+
+
 def load_events(source: str) -> dict:
     if source == "seed":
         path = SEED_LARGE if os.path.exists(SEED_LARGE) else SEED_SMALL
@@ -234,6 +286,9 @@ class Handler(BaseHTTPRequestHandler):
                 if not book or r["bookmaker"] == book:
                     return self._send(200, r["json"])
             return self._send(404, {"error": "zatím nic zachyceno"})
+
+        if u.path == "/markets":            # čitelný výpis všech trhů + kurzů
+            return self._send(200, markets_html(q.get("all") == "1"), "text/html")
 
         if u.path == "/api/diag":           # diagnostika na reálných datech
             return self._send(200, diagnostics())
