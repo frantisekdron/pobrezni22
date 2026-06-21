@@ -32,7 +32,9 @@ def s(x: str) -> str:
 TWO_WAY_SPORTS = {"tenis", "tennis", "basketbal", "basketball", "nba",
                   "volejbal", "volleyball", "mma", "ufc", "oktagon", "box",
                   "baseball", "sipky", "darts", "stolni tenis", "table tennis",
-                  "americky fotbal", "snooker", "badminton"}
+                  "americky fotbal", "snooker", "badminton",
+                  "esport", "esports", "counter strike", "league of legends",
+                  "dota", "valorant"}
 
 OVER_RE = re.compile(r"\b(nad|vice|over|more)\b|^\s*\+\s*\d")
 UNDER_RE = re.compile(r"\b(pod|mene|under|less)\b|^\s*-\s*\d")

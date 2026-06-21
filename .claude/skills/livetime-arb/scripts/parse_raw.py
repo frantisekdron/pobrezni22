@@ -100,7 +100,52 @@ def _market(d, km):
     return None
 
 
+def parse_tipsport(obj):
+    """Tipsport rest/offer/v2/matches — list zápasů s 1X2 (pole 'odd', type 1/x/2)."""
+    SP = {"fotbal": "fotbal", "tenis": "tenis", "basketbal": "basketbal",
+          "hokej": "hokej", "sipky": "sipky", "volejbal": "volejbal",
+          "baseball": "baseball", "americky fotbal": "americky fotbal",
+          "counter strike": "esport", "esport": "esport", "box": "box",
+          "stolni tenis": "stolni tenis", "snooker": "snooker"}
+
+    def sp(s):
+        s = re.sub(r"\s*-\s*(muzi|zeny).*$", "", (s or "").lower()).strip()
+        for k, v in SP.items():
+            if k in s:
+                return v
+        return s.split(" - ")[0].split()[0] if s else "?"
+
+    out = []
+    for mt in obj.get("matches", []):
+        home = mt.get("participantHome") or "?"
+        away = mt.get("participantVisiting") or "?"
+        sport = sp(mt.get("superSport") or mt.get("sport") or "")
+        for row in mt.get("oppRows", []):
+            for o in row.get("oppsTab", []):
+                if o.get("bettingEnabled") is False:
+                    continue
+                code = {"1": "1", "x": "X", "2": "2"}.get((o.get("type") or "").lower())
+                if not code:                      # 1x / x2 (dvojtip) přeskoč
+                    continue
+                odd = fnum(o.get("odd"))
+                if not odd or odd <= 1.01:
+                    continue
+                out.append({"bookmaker": "tipsport", "sport": sport,
+                            "home": home, "away": away,
+                            "market": "Výsledek zápasu", "line": None,
+                            "outcome": code, "odds": odd})
+    return out
+
+
 def extract(book, obj, sport="?"):
+    # Tipsport má vlastní tvar (rest/offer/v2/matches) → dedikovaný parser
+    if isinstance(obj, dict) and isinstance(obj.get("matches"), list) \
+            and obj["matches"] and isinstance(obj["matches"][0], dict) \
+            and ("oppRows" in obj["matches"][0] or "participantHome" in obj["matches"][0]):
+        tip = parse_tipsport(obj)
+        if tip:
+            return tip
+
     quotes = []
 
     def walk(node, ctx):
