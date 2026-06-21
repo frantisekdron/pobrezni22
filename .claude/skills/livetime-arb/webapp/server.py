@@ -97,6 +97,53 @@ def build_opportunities(events: dict, total, bankroll, kelly,
     return {"surebets": surebets, "values": values}
 
 
+def diagnostics() -> dict:
+    """Co se reálně sbírá a parsuje — ať je vidět, kde to případně drhne."""
+    from collections import Counter
+    raw_by_book = Counter(r["bookmaker"] for r in RAW)
+    parsed_by_book, samples, urls_by_book = Counter(), {}, {}
+    try:
+        import parse_raw
+        for r in RAW:
+            try:
+                qs = parse_raw.extract(r["bookmaker"], r["json"])
+            except Exception:
+                qs = []
+            parsed_by_book[r["bookmaker"]] += len(qs)
+            urls_by_book.setdefault(r["bookmaker"], set()).add(r["url"][:120])
+            if qs and r["bookmaker"] not in samples:
+                samples[r["bookmaker"]] = qs[:6]
+    except Exception as e:
+        samples["_error"] = str(e)
+
+    db_quotes = db.recent_quotes(24 * 3600)
+    events = normalize.merge_quotes(db_quotes)
+    mkt_types = Counter()
+    complete_examples = []
+    for e in events.get("events", []):
+        for m in e["markets"]:
+            mkt_types[m["type"]] += 1
+            books = sorted({b for codes in m["quotes"].values() for b in codes})
+            if len(books) >= 2 and len(complete_examples) < 8:
+                complete_examples.append(
+                    {"event": e["event"], "market": m["market"], "books": books})
+
+    return {
+        "raw_captures_per_book": dict(raw_by_book),
+        "parsed_quotes_per_book": dict(parsed_by_book),
+        "raw_urls_per_book": {k: sorted(v)[:12] for k, v in urls_by_book.items()},
+        "parsed_samples": samples,
+        "db_quotes": len(db_quotes),
+        "db_books": sorted({q.get("bookmaker") for q in db_quotes}),
+        "canonical_events": len(events.get("events", [])),
+        "canonical_markets_by_type": dict(mkt_types),
+        "markets_with_2plus_books": complete_examples,
+        "hint": ("Když parsed_quotes_per_book = 0 u sázkovky, parser netrefuje "
+                 "její JSON → pošli mi /api/raw/sample?book=NAZEV. Když markets_"
+                 "with_2plus_books je prázdné, nemáš stejný trh od 2 sázkovek."),
+    }
+
+
 def load_events(source: str) -> dict:
     if source == "seed":
         path = SEED_LARGE if os.path.exists(SEED_LARGE) else SEED_SMALL
@@ -176,6 +223,9 @@ class Handler(BaseHTTPRequestHandler):
                 if not book or r["bookmaker"] == book:
                     return self._send(200, r["json"])
             return self._send(404, {"error": "zatím nic zachyceno"})
+
+        if u.path == "/api/diag":           # diagnostika na reálných datech
+            return self._send(200, diagnostics())
 
         if u.path == "/api/events":
             return self._send(200, load_events(q.get("source", "seed")))
