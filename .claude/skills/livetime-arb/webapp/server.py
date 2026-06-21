@@ -188,6 +188,17 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- GET ----
     def do_GET(self):
+        try:
+            self._do_GET()
+        except Exception as e:           # nikdy neshodit spojení — vrať čitelnou chybu
+            import traceback
+            traceback.print_exc()
+            try:
+                self._send(500, {"error": str(e)})
+            except Exception:
+                pass
+
+    def _do_GET(self):
         u = urlparse(self.path)
         q = {k: v[0] for k, v in parse_qs(u.query).items()}
 

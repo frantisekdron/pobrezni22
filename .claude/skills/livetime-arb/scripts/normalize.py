@@ -108,40 +108,43 @@ def merge_quotes(quotes: list) -> dict:
     clusters = []   # každý: {sport, home, away, markets:{key:{type,subject,line,codes}}}
 
     for q in quotes:
-        sport = q.get("sport", "?")
-        home = q.get("home", "?")
-        away = q.get("away", "?")
-        try:
-            odds = float(str(q.get("odds")).replace(",", "."))
-        except (TypeError, ValueError):
-            continue
-        if not (1.01 <= odds <= 1000):
-            continue
-        c = _canon.canon(q.get("market", ""), q.get("outcome", ""),
-                         q.get("line"), home, away, sport)
-        if not c:
-            continue
-        book = q.get("bookmaker", "?")
+        try:                                   # jeden vadný kurz nesmí shodit celý dotaz
+            sport = str(q.get("sport") or "?")
+            home = str(q.get("home") or "?")
+            away = str(q.get("away") or "?")
+            try:
+                odds = float(str(q.get("odds")).replace(",", "."))
+            except (TypeError, ValueError):
+                continue
+            if not (1.01 <= odds <= 1000):
+                continue
+            c = _canon.canon(q.get("market", ""), q.get("outcome", ""),
+                             q.get("line"), home, away, sport)
+            if not c:
+                continue
+            book = str(q.get("bookmaker") or "?")
 
-        cl = None
-        for cc in clusters:
-            if event_matches(sport, home, away, cc["sport"], cc["home"], cc["away"]):
-                cl = cc
-                break
-        if cl is None:
-            cl = {"sport": sport, "home": home, "away": away, "markets": {}}
-            clusters.append(cl)
-        if len(home) > len(cl["home"]):
-            cl["home"] = home
-        if len(away) > len(cl["away"]):
-            cl["away"] = away
+            cl = None
+            for cc in clusters:
+                if event_matches(sport, home, away, cc["sport"], cc["home"], cc["away"]):
+                    cl = cc
+                    break
+            if cl is None:
+                cl = {"sport": sport, "home": home, "away": away, "markets": {}}
+                clusters.append(cl)
+            if len(home) > len(cl["home"]):
+                cl["home"] = home
+            if len(away) > len(cl["away"]):
+                cl["away"] = away
 
-        m = cl["markets"].setdefault(c["key"], {
-            "type": c["type"], "subject": c["subject"], "line": c["line"],
-            "codes": defaultdict(dict)})
-        prev = m["codes"][c["code"]]
-        if book not in prev or odds > prev[book]:
-            prev[book] = odds
+            m = cl["markets"].setdefault(c["key"], {
+                "type": c["type"], "subject": c["subject"], "line": c["line"],
+                "codes": defaultdict(dict)})
+            prev = m["codes"][c["code"]]
+            if book not in prev or odds > prev[book]:
+                prev[book] = odds
+        except Exception:
+            continue
 
     out = {"events": []}
     for c in clusters:

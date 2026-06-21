@@ -81,14 +81,33 @@ def connect(path: str = None):
         con.close()
 
 
+def _f(x):
+    try:
+        return float(str(x).replace(",", "."))
+    except (TypeError, ValueError):
+        return None
+
+
 def insert_quotes(quotes: list, path: str = None) -> int:
-    """Uloží list kotací (dict). Vrací počet vložených."""
+    """Uloží list kotací (dict). Vadné (nečíselný kurz) přeskočí. Vrací počet."""
     ts = time.time()
-    rows = [(
-        q.get("ts", ts), q.get("bookmaker", "?"), q.get("sport"),
-        q.get("home"), q.get("away"), q.get("market"),
-        q.get("line"), q.get("outcome"), float(q["odds"]),
-    ) for q in quotes]
+    rows = []
+    for q in quotes:
+        odds = _f(q.get("odds"))
+        if odds is None or not (1.01 <= odds <= 1000):
+            continue                      # přeskoč vadný/nesmyslný kurz
+        rows.append((
+            q.get("ts", ts), str(q.get("bookmaker") or "?"),
+            (str(q.get("sport")) if q.get("sport") is not None else None),
+            (str(q.get("home")) if q.get("home") is not None else None),
+            (str(q.get("away")) if q.get("away") is not None else None),
+            (str(q.get("market")) if q.get("market") is not None else None),
+            _f(q.get("line")),
+            (str(q.get("outcome")) if q.get("outcome") is not None else None),
+            odds,
+        ))
+    if not rows:
+        return 0
     with connect(path) as con:
         con.executemany(
             "INSERT INTO quotes(ts,bookmaker,sport,home,away,market,line,"

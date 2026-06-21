@@ -31,17 +31,27 @@
 
   <!-- DASHBOARD -->
   <section id="dash">
-    <div class="card rounded-lg p-3 mb-4 flex flex-wrap gap-3 items-end text-sm">
-      <label>Zdroj dat<br><select id="source" class="rounded px-2 py-1 mt-1">
-        <option value="seed">Demo (25 zápasů)</option>
-        <option value="db">Moje DB (importované)</option></select></label>
-      <label>Vklad/surebet<br><input id="total" type="number" value="1000" class="rounded px-2 py-1 w-24 mt-1"></label>
-      <label>Bankroll<br><input id="bankroll" type="number" value="100000" class="rounded px-2 py-1 w-28 mt-1"></label>
-      <label>Min. marže %<br><input id="minmargin" type="number" value="0.5" step="0.5" class="rounded px-2 py-1 w-20 mt-1"></label>
-      <label>Min. EV %<br><input id="minedge" type="number" value="3" step="0.5" class="rounded px-2 py-1 w-20 mt-1"></label>
-      <label>Kelly<br><input id="kelly" type="number" value="0.25" step="0.05" class="rounded px-2 py-1 w-20 mt-1"></label>
+    <div class="card rounded-lg p-3 mb-4 text-sm">
+      <div class="flex flex-wrap gap-3 items-end">
+      <label title="Odkud brát kurzy: Moje DB = co nasbíralo rozšíření; Demo = ukázková data">Zdroj dat<br><select id="source" class="rounded px-2 py-1 mt-1">
+        <option value="db" selected>Moje DB (importované)</option>
+        <option value="seed">Demo (25 zápasů)</option></select></label>
+      <label title="Kolik Kč celkem vsadíš do JEDNOHO surebetu. Rozdělí se mezi obě strany.">Vklad/surebet ⓘ<br><input id="total" type="number" value="1000" class="rounded px-2 py-1 w-24 mt-1"></label>
+      <label title="Tvůj celkový kapitál. Slouží k výpočtu velikosti VALUE sázek (přes Kelly).">Bankroll ⓘ<br><input id="bankroll" type="number" value="100000" class="rounded px-2 py-1 w-28 mt-1"></label>
+      <label title="Zobraz jen surebety s aspoň tímhle zaručeným ziskem. 0,5 = ukaž i malé.">Min. marže % ⓘ<br><input id="minmargin" type="number" value="0.5" step="0.5" class="rounded px-2 py-1 w-20 mt-1"></label>
+      <label title="Zobraz jen value bety s aspoň tímhle náskokem nad férem. 3 = +3 %.">Min. EV % ⓘ<br><input id="minedge" type="number" value="3" step="0.5" class="rounded px-2 py-1 w-20 mt-1"></label>
+      <label title="Opatrnost u value sázek. 0,25 = čtvrt-Kelly (bezpečné). Vyšší = větší sázky.">Kelly ⓘ<br><input id="kelly" type="number" value="0.25" step="0.05" class="rounded px-2 py-1 w-20 mt-1"></label>
       <button onclick="loadOpps()" class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded font-semibold">Najít</button>
       <span id="meta" class="text-slate-400"></span>
+      </div>
+      <div class="text-xs text-slate-400 mt-2 leading-relaxed border-t border-slate-800 pt-2">
+        <b>Co znamenají pole:</b>
+        <b>Vklad/surebet</b> = kolik vsadíš do jednoho jistého tipu (rozdělí se mezi strany) ·
+        <b>Bankroll</b> = celkový kapitál (pro velikost value sázek) ·
+        <b>Min. marže %</b> = nejmenší zaručený zisk surebetu, co chceš vidět ·
+        <b>Min. EV %</b> = nejmenší výhoda value betu ·
+        <b>Kelly</b> = jak velké value sázky (0,25 = opatrné). Surebet = jistý zisk; value bet = dlouhodobá výhoda, ne jistota.
+      </div>
     </div>
     <h2 class="font-bold mb-2">Surebety <span id="sbcount" class="text-slate-400 text-sm"></span></h2>
     <div id="surebets" class="grid gap-3 md:grid-cols-2"></div>
