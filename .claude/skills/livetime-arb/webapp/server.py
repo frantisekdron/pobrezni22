@@ -164,19 +164,30 @@ def markets_html(show_all: bool = False) -> str:
             elif not show_all:
                 continue
             codes = list(m["quotes"].keys())
-            best = {c: max(bk.values()) for c, bk in m["quotes"].items() if bk}
-            S = sum(1 / o for o in best.values()) if len(best) == len(codes) else None
-            tag = ""
-            if S is not None:
-                if S < 1:
-                    tag = f"<b style='color:#22c55e'>🟢 ARB +{(1/S-1)*100:.2f}%</b>"
-                else:
-                    tag = f"<span style='color:#94a3b8'>Σ {S*100:.1f}% (přebití {(S-1)*100:.1f}%)</span>"
+            best = {}                          # code -> (book, odds)
+            for c, bk in m["quotes"].items():
+                if bk:
+                    b, o = max(bk.items(), key=lambda kv: kv[1])
+                    best[c] = (b, o)
+            complete = len(best) == len(codes) and len(codes) >= 2
+            S = sum(1 / o for (_, o) in best.values()) if complete else None
+            leg_books = {b for (b, _) in best.values()}
+            real_arb = S is not None and S < 1 and len(leg_books) >= 2 and (1 / S - 1) <= 0.20
+            if real_arb:
+                tag = f"<b style='color:#22c55e'>🟢 ARB +{(1/S-1)*100:.2f}% (napříč {len(leg_books)} sáz.)</b>"
+            elif S is not None and S < 1 and len(leg_books) < 2:
+                tag = "<span style='color:#f59e0b'>⚠ Σ&lt;100 %, ale jen 1 sázkovka → chyba dat, NE arbitráž</span>"
+            elif S is not None and S < 1:
+                tag = f"<span style='color:#f59e0b'>⚠ +{(1/S-1)*100:.1f}% – příliš vysoké, nejspíš chyba dat</span>"
+            elif S is not None:
+                tag = f"<span style='color:#94a3b8'>Σ {S*100:.1f}% (přebití {(S-1)*100:.1f}%)</span>"
+            else:
+                tag = "<span style='color:#64748b'>neúplný trh</span>"
             cells = []
             for c in codes:
                 bs = " · ".join(f"{b}:{o:.2f}" for b, o in sorted(m["quotes"][c].items()))
                 cells.append(f"<td><b>{c}</b><br><span style='color:#93c5fd'>{bs}</span></td>")
-            border = "#22c55e" if (S is not None and S < 1) else ("#1d4ed8" if nbooks >= 2 else "#334155")
+            border = "#22c55e" if real_arb else ("#1d4ed8" if nbooks >= 2 else "#334155")
             rows.append(
                 f"<tr style='border-left:3px solid {border}'><td style='min-width:230px'>{m['market']} "
                 f"<span style='color:#64748b'>[{nbooks} sáz.]</span><br>{tag}</td>{''.join(cells)}</tr>")
