@@ -125,23 +125,24 @@ def canon(market: str, outcome: str, line, home="", away="", sport=""):
             return None        # neznámý subjekt → nebezpečné párovat → zahodit
         return _mk("OU", subj, ln, "OVER" if is_over else "UNDER")
 
-    # Výsledek 1X2 / 2-cestný
-    two_way = s(sport) in TWO_WAY_SPORTS
-    typ = "WINNER2" if two_way else "1X2"
+    # Výsledek — jednotný typ RESULT (1X2 vs WINNER2 se rozhodne až podle
+    # sportu ZÁPASU, který je znám po sloučení sázkovek — viz normalize)
     if o in ("1", "2"):
-        return _mk(typ, "result", None, o)
-    if o == "x":
-        return None if two_way else _mk("1X2", "result", None, "X")
-    if DRAW_RE.match(o):
-        return None if two_way else _mk("1X2", "result", None, "X")
+        return _mk("RESULT", "result", None, o)
+    if o == "x" or DRAW_RE.match(o):
+        return _mk("RESULT", "result", None, "X")
     H, A = s(home), s(away)
-    # výsledek přes jméno týmu/hráče (jen u zjevně výsledkového trhu nebo holého názvu)
-    if (RESULT_RE.search(m) or m in ("", "?")) and not is_over and not is_under:
+    if RESULT_RE.search(m) or m in ("", "?"):
         if H and (o == H or (len(o) > 2 and o in H)):
-            return _mk(typ, "result", None, "1")
+            return _mk("RESULT", "result", None, "1")
         if A and (o == A or (len(o) > 2 and o in A)):
-            return _mk(typ, "result", None, "2")
+            return _mk("RESULT", "result", None, "2")
     return None
+
+
+def is_two_way(sport) -> bool:
+    """Sport bez remízy (výsledek je 2-cestný: 1/2)."""
+    return s(sport) in TWO_WAY_SPORTS
 
 
 def _mk(typ, subject, line, code):

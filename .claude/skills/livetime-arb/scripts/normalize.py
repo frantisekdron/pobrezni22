@@ -156,7 +156,14 @@ def merge_quotes(quotes: list) -> dict:
         ev = {"sport": c["sport"],
               "event": f"{c['home']} – {c['away']}", "markets": []}
         for mk, m in c["markets"].items():
-            req = _canon.REQUIRED.get(m["type"], set())
+            if m["type"] == "RESULT":
+                # 1X2 (s remízou) vs WINNER2 (bez) podle sportu ZÁPASU
+                two = _canon.is_two_way(c["sport"])
+                req = {"1", "2"} if two else {"1", "X", "2"}
+                disp_type = "WINNER2" if two else "1X2"
+            else:
+                req = _canon.REQUIRED.get(m["type"], set())
+                disp_type = m["type"]
             have = set(m["codes"].keys())
             if not req or not req.issubset(have):    # neúplný trh → vynech
                 continue
@@ -172,8 +179,8 @@ def merge_quotes(quotes: list) -> dict:
             if any(not quotes[code] for code in req):  # po sanaci chybí strana
                 continue
             ev["markets"].append({
-                "type": m["type"], "line": m["line"],
-                "market": _canon.label(m["type"], m["subject"], m["line"]),
+                "type": disp_type, "line": m["line"],
+                "market": _canon.label(disp_type, m["subject"], m["line"]),
                 "quotes": quotes,
             })
         if ev["markets"]:
