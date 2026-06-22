@@ -78,8 +78,12 @@ def build_opportunities(events: dict, total, bankroll, kelly,
                         min_margin, min_edge, round_to=10,
                         max_margin=20.0, min_books=2) -> dict:
     surebets, values = [], []
+    n_markets = n_multi = 0
     for ev in events.get("events", []):
         for m in ev.get("markets", []):
+            n_markets += 1
+            if len({b for codes in m["quotes"].values() for b in codes}) >= 2:
+                n_multi += 1
             a = find_arb(ev["sport"], ev["event"], m["market"], m["quotes"],
                          total, min_margin / 100.0, round_to,
                          min_books=min_books, max_margin=max_margin / 100.0)
@@ -94,7 +98,8 @@ def build_opportunities(events: dict, total, bankroll, kelly,
                 values.append(vb)
     surebets.sort(key=lambda x: x["margin"], reverse=True)
     values.sort(key=lambda x: x["edge"], reverse=True)
-    return {"surebets": surebets, "values": values}
+    return {"surebets": surebets, "values": values,
+            "stats": {"markets": n_markets, "markets_multi": n_multi}}
 
 
 def diagnostics() -> dict:

@@ -164,11 +164,16 @@ async function loadOpps(){
     bankroll:$('#bankroll').value, min_margin:$('#minmargin').value,
     min_edge:$('#minedge').value, kelly:$('#kelly').value});
   const d = await (await fetch('/api/opportunities?'+p)).json();
-  $('#meta').textContent = `(zdroj: ${d.meta.events} zápasů)`;
+  const st = d.stats||{markets:0,markets_multi:0};
+  $('#meta').innerHTML = `zdroj: <b>${d.meta.events}</b> zápasů · ${st.markets} trhů · `
+    + `<b class="${st.markets_multi?'text-emerald-400':'text-amber-400'}">${st.markets_multi} od 2+ sázkovek</b> · `
+    + `<a href="/markets" target="_blank" class="text-blue-400">prohlédnout trhy</a>`;
   $('#sbcount').textContent = d.surebets.length;
   $('#vbcount').textContent = d.values.length;
+  const hint = st.markets_multi===0
+    ? '<p class="text-amber-400 text-sm">⚠ Žádný trh nemáš od 2+ sázkovek → není co porovnávat. Otevři stejné zápasy na víc sázkovkách (Tipsport + Fortuna + Betano).</p>' : '';
   $('#surebets').innerHTML = d.surebets.map(sbCard).join('') ||
-    '<p class="text-slate-500 text-sm">Žádný surebet nad zadanou marží.</p>';
+    ('<p class="text-slate-500 text-sm">Žádný surebet nad zadanou marží.</p>'+hint);
   $('#values').innerHTML = d.values.map(vbRow).join('') ||
     '<p class="text-slate-500 text-sm">Žádný value bet nad zadaným EV.</p>';
 }
