@@ -77,9 +77,12 @@ def norm_outcome(s: str) -> str:
 
 
 def event_matches(sport, home, away, c_sport, c_home, c_away) -> bool:
-    """Spáruje zápas s klastrem: stejný sport a oba účastníci se shodují
-    (bijektivně, ať jsou uvedení v jakémkoliv pořadí)."""
-    if strip_accents((sport or "").lower()) != strip_accents((c_sport or "").lower()):
+    """Spáruje zápas s klastrem podle účastníků (bijektivně). Sport blokuje,
+    JEN když je u obou znám a liší se — neznámý sport ('?') nepárování nebrání
+    (generický parser sport nezná, jinak by se tentýž zápas rozdělil)."""
+    s1 = strip_accents((sport or "").lower()).strip()
+    s2 = strip_accents((c_sport or "").lower()).strip()
+    if s1 and s2 and s1 != "?" and s2 != "?" and s1 != s2:
         return False
     direct = names_match(home, c_home) and names_match(away, c_away)
     swap = names_match(home, c_away) and names_match(away, c_home)
@@ -136,6 +139,8 @@ def merge_quotes(quotes: list) -> dict:
                 cl["home"] = home
             if len(away) > len(cl["away"]):
                 cl["away"] = away
+            if cl["sport"] in ("?", "") and sport not in ("?", ""):
+                cl["sport"] = sport          # převezmi známý sport (kvůli párování)
 
             m = cl["markets"].setdefault(c["key"], {
                 "type": c["type"], "subject": c["subject"], "line": c["line"],
