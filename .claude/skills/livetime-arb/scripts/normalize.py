@@ -155,10 +155,21 @@ def merge_quotes(quotes: list) -> dict:
             have = set(m["codes"].keys())
             if not req or not req.issubset(have):    # neúplný trh → vynech
                 continue
+            quotes = {code: dict(m["codes"][code]) for code in req}
+            # SANITACE: zahoď sázkovku, jejíž VLASTNÍ kurzy na tomhle trhu dají
+            # Σ < 99 % (u jedné kanceláře nemožné → chyba parsování nad/pod).
+            all_books = {b for code in req for b in quotes[code]}
+            for b in all_books:
+                own = [quotes[code][b] for code in req if b in quotes[code]]
+                if len(own) >= 2 and sum(1.0 / o for o in own) < 0.99:
+                    for code in req:
+                        quotes[code].pop(b, None)
+            if any(not quotes[code] for code in req):  # po sanaci chybí strana
+                continue
             ev["markets"].append({
                 "type": m["type"], "line": m["line"],
                 "market": _canon.label(m["type"], m["subject"], m["line"]),
-                "quotes": {code: dict(m["codes"][code]) for code in req},
+                "quotes": quotes,
             })
         if ev["markets"]:
             out["events"].append(ev)
