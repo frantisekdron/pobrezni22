@@ -1,15 +1,30 @@
 # livetime-arb — finder sázkových příležitostí (surebet · value · bonusy)
 
-Engine + Claude Code skill, který hledá **„livetime"** příležitosti napříč
-sázkovkami **Tipsport, Betano, bet365, Fortuna**:
+Hledá **arbitráž (surebet)** a **value bety** napříč sázkovkami **Tipsport,
+Fortuna, Betano** (bet365 jako zdroj kurzu k porovnání).
 
-- **Surebety (arbitráž)** — stejný trh vsazený na všechny výsledky se
-  **zaručeným ziskem** (např. Tipsport 3.00 „nad 28.5 es" + bet365 1.83
-  „pod 28.5" → **+13.66 %**, vklad 1000 Kč rozdělen 380/620 Kč).
-- **Value bety** — +EV jednotlivé sázky (kurz vyšší než férová pravd.).
-- **Konverze bonusů / free betů** — bezztrátová (matched betting).
+## Jak to celé funguje (aktuální architektura)
 
-Kurzy se berou **bez API** — importem ze zkopírovaných stránek do vlastní DB.
+1. **Sběr (`extension/`)** — vlastní Chrome rozšíření běží v TVÉM prohlížeči,
+   odchytá interní API stránek sázkovek (žádné 403) a pošle do dashboardu.
+   Samo rozklikává trhy a umí „Projet všechny zápasy".
+2. **Parsování (`scripts/parse_raw.py`)** — z API JSONu vytáhne kotace.
+   Tipsport má přesný parser (`rest/offer/v2/matches`), ostatní generický.
+3. **Kanonizace (`scripts/canon.py`)** — každý trh zařadí do striktní
+   taxonomie (1X2 / WINNER2 / OU / BTTS) nebo ZAHODÍ (betbuilder, exotika).
+4. **Sloučení (`scripts/normalize.py`)** — spáruje stejné zápasy napříč
+   sázkovkami (i při různém zápisu jmen, neznámém sportu) a nechá jen
+   KOMPLETNÍ trhy. **Sanitace** vyhodí sázkovku s nemožným vlastním Σ.
+5. **Výpočet (`scripts/arb.py`, `analyze.py`)** — arbitráž jen napříč **2+
+   sázkovkami**, marže **≤ 20 %**, rozdělení vkladů; value bety přes Kelly.
+6. **Dashboard (`webapp/`)** — Příležitosti, `/markets` (výpis trhů),
+   `/api/diag` (diagnostika), deník, bankroll, plán, bonusy.
+
+> Spuštění: `cd webapp && python3 server.py` → http://localhost:8000
+> Sběr: nainstaluj `extension/` (viz `extension/README.md`).
+
+**Pojistky proti nesmyslům:** ≥2 sázkovky · marže ≤20 % · kompletní sady
+výsledků · sanitace nekonzistentních dat · přeskočení vadných kurzů.
 
 ## Obsah balíčku
 
